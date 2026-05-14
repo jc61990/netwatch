@@ -1103,6 +1103,30 @@ ALERTMANAGER_VERSION=${ALERTMANAGER_VERSION}
 CONFIG_DIR=${CONFIG_DIR}
 DATA_DIR=${DATA_DIR}
 EOF
+
+    # ── Write VERSION file so git history tracks component upgrades ───────────
+    # Copy back to the source directory if install.sh is being run from the repo
+    local repo_dir
+    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local version_file="${INSTALL_DIR}/VERSION"
+
+    cat > "${version_file}" << EOF
+# NetWatch component versions
+# Updated automatically by install.sh and update.sh on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+# Commit this file after each upgrade so git history tracks version changes
+
+SNMP_EXPORTER_VERSION="${SNMP_EXPORTER_VERSION}"
+PROMETHEUS_VERSION="${PROMETHEUS_VERSION}"
+ALERTMANAGER_VERSION="${ALERTMANAGER_VERSION}"
+GRAFANA_VERSION="$(grafana-server -v 2>/dev/null | awk '{print $2}' || echo 'see: grafana-server -v')"
+EOF
+
+    # If running from the repo, keep the repo copy in sync too
+    if [[ -f "${repo_dir}/VERSION" ]]; then
+        cp "${version_file}" "${repo_dir}/VERSION"
+        info "VERSION file updated at ${repo_dir}/VERSION — commit this to track the upgrade"
+    fi
+    success "VERSION file written → ${version_file}"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

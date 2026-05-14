@@ -1,0 +1,8 @@
+# NetWatch component versions
+# This file is updated automatically by install.sh and update.sh
+# Commit this file after each upgrade so git history tracks version changes
+
+SNMP_EXPORTER_VERSION="0.27.0"
+PROMETHEUS_VERSION="2.53.3"
+ALERTMANAGER_VERSION="0.27.0"
+GRAFANA_VERSION="latest-oss"   # installed via apt repo — check: grafana-server -v

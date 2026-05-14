@@ -1,0 +1,15 @@
+# Secrets — never commit these
+/etc/netwatch/snmp_exporter/snmp.yml
+/etc/netwatch/alertmanager/alertmanager.yml
+configs/snmp_exporter/snmp.yml
+configs/alertmanager/alertmanager.yml
+
+# Runtime / install metadata
+.install_meta
+*.bak.*
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

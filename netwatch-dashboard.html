@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetWatch — Cisco IOS Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#eeecea;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.22);
+  --radius:8px;--radius-lg:12px;
+  --font:'Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Fira Mono',Consolas,monospace;
+  --ok:#3B6D11;--warn:#854F0B;--danger:#A32D2D;
+  --ok-bg:#EAF3DE;--warn-bg:#FAEEDA;--danger-bg:#FCEBEB;
+  --blue:#378ADD;--blue-bg:#E6F1FB;--accent:#2E75B6;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+  --text:#f0ede8;--text2:#b4b2a9;--text3:#888780;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.2);
+  --ok:#97C459;--warn:#FAC775;--danger:#F09595;
+  --ok-bg:#17340a;--warn-bg:#412402;--danger-bg:#501313;--blue-bg:#042C53;
+}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* Nav */
+.topbar{background:var(--bg);border-bottom:.5px solid var(--border);padding:0 1rem;display:flex;align-items:stretch;position:sticky;top:0;z-index:100;}
+.brand{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:0 1.25rem 0 0;margin-right:1rem;border-right:.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:#639922;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-tab{font-size:13px;color:var(--text2);padding:0 1rem;cursor:pointer;border-bottom:2px solid transparent;line-height:52px;transition:color .15s;white-space:nowrap;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.alert-pill{background:#E24B4A;color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:6px;}
+.api-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-left:auto;padding-right:.5rem;}
+.api-dot{width:6px;height:6px;border-radius:50%;background:#639922;}
+.api-dot.offline{background:#E24B4A;}
+.api-dot.checking{background:#BA7517;animation:pulse 1s infinite;}
+
+/* Layout */
+.app{max-width:1280px;margin:0 auto;padding:0 1rem 2rem;}
+.page{display:none;padding-top:1.5rem;}
+.page.active{display:block;}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.875rem;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+@media(max-width:900px){.two-col,.three-col,.metric-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.two-col,.three-col,.metric-grid{grid-template-columns:1fr;}}
+
+/* Metric cards */
+.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
+.metric-card{background:var(--bg2);border-radius:var(--radius);padding:.875rem 1rem;}
+.metric-label{font-size:11px;color:var(--text2);margin-bottom:6px;}
+.metric-value{font-size:22px;font-weight:500;line-height:1;}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+
+/* Chart cards */
+.chart-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;}
+.chart-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.875rem;}
+.chart-title{font-size:13px;font-weight:500;}
+.chart-meta{font-size:11px;color:var(--text3);}
+.legend{display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:var(--text2);flex-wrap:wrap;}
+.legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle;}
+
+/* Colours */
+.ok{color:var(--ok);}.warn{color:var(--warn);}.danger{color:var(--danger);}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;}
+.b-up{background:var(--ok-bg);color:var(--ok);}
+.b-down{background:var(--danger-bg);color:var(--danger);}
+.b-static{background:var(--bg2);color:var(--text2);}
+.b-ospf{background:#E1F5EE;color:#0F6E56;}
+.b-bgp{background:#EEEDFE;color:#3C3489;}
+@media(prefers-color-scheme:dark){.b-ospf{background:#04342C;color:#5DCAA5;}.b-bgp{background:#26215C;color:#AFA9EC;}}
+
+/* Tables */
+table.iface,table.route{width:100%;border-collapse:collapse;font-size:12px;}
+table.iface th,table.route th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:7px 10px;border-bottom:.5px solid var(--border);}
+table.iface td,table.route td{padding:8px 10px;border-bottom:.5px solid var(--border);color:var(--text);vertical-align:middle;}
+table.iface tr:last-child td,table.route tr:last-child td{border-bottom:none;}
+table.route td{font-family:var(--mono);font-size:11px;}
+table.route td:nth-child(2){font-family:var(--font);}
+.util-wrap{width:80px;height:6px;background:var(--bg2);border-radius:3px;display:inline-block;vertical-align:middle;margin-right:6px;}
+.util-bar{height:6px;border-radius:3px;}
+.u-ok{background:#639922;}.u-warn{background:#BA7517;}.u-danger{background:#E24B4A;}
+
+/* Alert items */
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--radius);font-size:12px;line-height:1.5;}
+.a-crit{background:var(--danger-bg);color:var(--danger);}
+.a-warn{background:var(--warn-bg);color:var(--warn);}
+.a-info{background:var(--blue-bg);color:var(--blue);}
+.a-ok{background:var(--ok-bg);color:var(--ok);}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.d-crit{background:#E24B4A;}.d-warn{background:#BA7517;}.d-info{background:#378ADD;}.d-ok{background:#639922;}
+.alert-time{font-size:10px;opacity:.65;margin-top:3px;}
+
+/* Site cards */
+.site-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.125rem 1.25rem;cursor:pointer;transition:border-color .15s;}
+.site-card:hover{border-color:var(--border2);}
+.site-card.has-crit{border-left:3px solid #E24B4A;}
+.site-card.has-warn{border-left:3px solid #BA7517;}
+.site-name{font-size:14px;font-weight:500;margin-bottom:3px;}
+.site-device{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px;}
+.site-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.site-stat{font-size:11px;color:var(--text2);}
+.site-stat span{display:block;font-size:16px;font-weight:500;color:var(--text);margin-top:2px;}
+
+/* ── ADMIN ────────────────────────────────────────────────────────────── */
+.admin-layout{display:grid;grid-template-columns:196px 1fr;gap:1.5rem;margin-top:.25rem;}
+@media(max-width:680px){.admin-layout{grid-template-columns:1fr;}}
+
+.admin-sidebar{display:flex;flex-direction:column;gap:2px;}
+.admin-nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:background .12s,color .12s;font-family:var(--font);}
+.admin-nav-item:hover{background:var(--bg2);color:var(--text);}
+.admin-nav-item.active{background:var(--bg2);color:var(--text);font-weight:500;}
+.admin-nav-item svg{flex-shrink:0;opacity:.65;}
+.admin-nav-item.active svg{opacity:1;}
+
+.admin-panel{display:none;}
+.admin-panel.active{display:block;}
+
+.admin-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.admin-card-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.admin-card-desc{font-size:12px;color:var(--text3);margin-bottom:1.25rem;line-height:1.6;}
+
+/* Form */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-row.thirds{grid-template-columns:1fr 1fr 1fr;}
+.form-row.single{grid-template-columns:1fr;}
+@media(max-width:600px){.form-row,.form-row.thirds{grid-template-columns:1fr;}}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.03em;}
+.req{color:#E24B4A;margin-left:2px;}
+.form-input,.form-select{width:100%;padding:7px 10px;font-size:13px;font-family:var(--font);background:var(--bg2);color:var(--text);border:.5px solid var(--border2);border-radius:var(--radius);outline:none;transition:border-color .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-input.mono{font-family:var(--mono);font-size:12px;}
+.form-hint{font-size:11px;color:var(--text3);}
+.form-toggle{display:flex;align-items:center;gap:8px;padding:8px 0;}
+.toggle{width:36px;height:20px;-webkit-appearance:none;appearance:none;background:var(--bg3);border:.5px solid var(--border2);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;}
+.toggle:checked{background:var(--accent);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.toggle:checked::after{left:18px;}
+.toggle-lbl{font-size:13px;}
+
+/* Thresholds */
+.threshold-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:560px){.threshold-grid{grid-template-columns:1fr;}}
+.t-card{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;}
+.t-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.t-name{font-size:12px;font-weight:500;}
+.t-val{font-size:18px;font-weight:600;font-family:var(--mono);}
+.t-slider{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bg3);outline:none;cursor:pointer;}
+.t-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);}
+.t-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);}
+.t-range{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* Device table */
+.dt-wrap{overflow-x:auto;}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.dt th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:7px 10px;border-bottom:.5px solid var(--border);}
+table.dt td{padding:5px 5px;border-bottom:.5px solid var(--border);vertical-align:middle;}
+table.dt tr:last-child td{border-bottom:none;}
+.td-in{width:100%;padding:5px 8px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text);border:.5px solid transparent;border-radius:5px;outline:none;transition:border-color .15s;}
+.td-in:focus{border-color:var(--accent);background:var(--bg);}
+.td-in.mono{font-family:var(--mono);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;font-weight:500;font-family:var(--font);border-radius:var(--radius);cursor:pointer;border:none;transition:opacity .15s;white-space:nowrap;}
+.btn:hover{opacity:.82;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-secondary{background:var(--bg2);color:var(--text);border:.5px solid var(--border2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-icon{padding:5px;background:none;border:none;cursor:pointer;color:var(--text3);border-radius:5px;display:inline-flex;align-items:center;}
+.btn-icon:hover{background:var(--danger-bg);color:var(--danger);}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:1rem;}
+
+/* Feedback */
+.fb{display:none;align-items:center;gap:8px;padding:9px 13px;border-radius:var(--radius);font-size:12px;margin-top:.75rem;}
+.fb.show{display:flex;}
+.fb.ok{background:var(--ok-bg);color:var(--ok);}
+.fb.err{background:var(--danger-bg);color:var(--danger);}
+.fb.loading{background:var(--blue-bg);color:var(--blue);}
+
+/* SNMP tabs */
+.v-tabs{display:flex;gap:0;margin-bottom:1rem;background:var(--bg2);border-radius:var(--radius);padding:3px;width:fit-content;}
+.v-tab{padding:5px 16px;font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;color:var(--text3);border:none;background:none;font-family:var(--font);transition:all .15s;}
+.v-tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.snmp-block{display:none;}
+.snmp-block.on{display:block;}
+
+/* Reload banner */
+.reload-banner{display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--warn-bg);border:.5px solid var(--warn);border-radius:var(--radius);margin-bottom:1rem;font-size:13px;color:var(--warn);}
+.reload-banner.show{display:flex;}
+
+/* Sidebar divider */
+.sidebar-divider{height:.5px;background:var(--border);margin:6px 0;}
+.sidebar-section-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:4px 12px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><div class="brand-dot"></div>NetWatch</div>
+  <div class="nav-tab active"  onclick="showPage('overview',this)">Overview</div>
+  <div class="nav-tab"         onclick="showPage('hq',this)">HQ — New York</div>
+  <div class="nav-tab"         onclick="showPage('chicago',this)">Branch — Chicago</div>
+  <div class="nav-tab"         onclick="showPage('la',this)">Branch — LA</div>
+  <div class="nav-tab"         onclick="showPage('alerts',this)">Alerts <span class="alert-pill">4</span></div>
+  <div class="nav-tab"         onclick="showPage('admin',this)">⚙ Admin</div>
+  <div class="api-status">
+    <div class="api-dot checking" id="apiDot"></div>
+    <span id="apiLabel">connecting…</span>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- ════════ OVERVIEW ═══════════════════════════════════════════════════════ -->
+<div class="page active" id="page-overview">
+  <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--warn);margin-bottom:1.5rem;padding:10px 14px;background:var(--warn-bg);border-radius:var(--radius);border-left:3px solid #BA7517;">
+    <div style="width:8px;height:8px;border-radius:50%;background:#BA7517;flex-shrink:0"></div>
+    2 of 3 sites fully operational — 4 active alerts — last polled 14 seconds ago
+  </div>
+  <div class="section-label">Fleet summary</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">Total managed devices</div><div class="metric-value">9</div><div class="metric-sub">3 sites · 3 routers · 3 switches · 3 firewalls</div></div>
+    <div class="metric-card"><div class="metric-label">Interfaces up</div><div class="metric-value ok">34</div><div class="metric-sub">of 38 configured (89%)</div></div>
+    <div class="metric-card"><div class="metric-label">Active alerts</div><div class="metric-value danger">4</div><div class="metric-sub">2 critical · 2 warning</div></div>
+    <div class="metric-card"><div class="metric-label">Fleet avg CPU</div><div class="metric-value warn">61%</div><div class="metric-sub">NYC-RTR-01 highest at 74%</div></div>
+  </div>
+  <div class="section-label">Sites at a glance</div>
+  <div class="three-col">
+    <div class="site-card"          onclick="switchTo('hq')"><div class="site-name">HQ — New York</div><div class="site-device">NYC-RTR-01 · 10.0.0.1 · ISR 4451</div><div class="site-stats"><div class="site-stat">CPU<span class="warn">74%</span></div><div class="site-stat">Memory<span>48%</span></div><div class="site-stat">WAN in<span>842 Mbps</span></div><div class="site-stat">Links<span class="ok">12/12</span></div></div></div>
+    <div class="site-card has-crit" onclick="switchTo('chicago')"><div class="site-name">Branch — Chicago</div><div class="site-device">CHI-RTR-01 · 10.1.0.1 · ISR 4331</div><div class="site-stats"><div class="site-stat">CPU<span class="ok">38%</span></div><div class="site-stat">Memory<span>31%</span></div><div class="site-stat">WAN in<span>215 Mbps</span></div><div class="site-stat">Links<span class="danger">9/11</span></div></div></div>
+    <div class="site-card has-warn" onclick="switchTo('la')"><div class="site-name">Branch — Los Angeles</div><div class="site-device">LAX-RTR-01 · 10.2.0.1 · ISR 4351</div><div class="site-stats"><div class="site-stat">CPU<span>55%</span></div><div class="site-stat">Memory<span class="warn">82%</span></div><div class="site-stat">WAN in<span>389 Mbps</span></div><div class="site-stat">Links<span class="ok">13/13</span></div></div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Fleet bandwidth — 1h (Mbps)</span><span class="chart-meta">all sites</span></div><div class="legend"><span><span class="legend-dot" style="background:#378ADD"></span>In</span><span><span class="legend-dot" style="background:#639922"></span>Out</span></div><div style="position:relative;height:200px"><canvas id="fleetBwChart"></canvas></div></div>
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">CPU — all routers</span></div><div style="position:relative;height:200px"><canvas id="cpuBarChart"></canvas></div></div>
+  </div>
+  <div class="chart-card"><div class="chart-header"><span class="chart-title">Active alerts</span></div>
+    <div class="alert-list">
+      <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>CHI-RTR-01</strong> — GigabitEthernet0/2 operationally DOWN (err-disabled, 847 input errors)</div><div class="alert-time">04/02/2026 11:43 — 14 min ago</div></div></div>
+      <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>CHI-RTR-01</strong> — Tunnel10 (MPLS VPN) DOWN — no keepalives from PE 203.0.130.5</div><div class="alert-time">04/02/2026 11:39 — 18 min ago</div></div></div>
+      <div class="alert-item a-warn"><div class="alert-dot d-warn"></div><div><div><strong>NYC-RTR-01</strong> — CPU 5-min 74% exceeds 70% threshold</div><div class="alert-time">04/02/2026 11:51 — 6 min ago</div></div></div>
+      <div class="alert-item a-warn"><div class="alert-dot d-warn"></div><div><div><strong>LAX-RTR-01</strong> — Memory 82% exceeds 80% threshold</div><div class="alert-time">04/02/2026 11:48 — 9 min ago</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HQ ══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-hq">
+  <div class="section-label">NYC-RTR-01 — 10.0.0.1 — Cisco ISR 4451</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">CPU 5-min avg</div><div class="metric-value warn">74%</div><div class="metric-sub">above 70% threshold</div></div>
+    <div class="metric-card"><div class="metric-label">Memory used</div><div class="metric-value">48%</div><div class="metric-sub">4.8 GB of 10 GB</div></div>
+    <div class="metric-card"><div class="metric-label">Uptime</div><div class="metric-value">142d</div><div class="metric-sub">since Nov 11, 2025</div></div>
+    <div class="metric-card"><div class="metric-label">Default route</div><div class="metric-value" style="font-size:13px;font-family:var(--mono);line-height:1.5">0.0.0.0/0<br>via 203.0.113.1</div><div class="metric-sub">Gi0/0 — ISP-A</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Bandwidth — Gi0/0 WAN (Mbps)</span><span class="chart-meta">1 Gbps · 1h</span></div><div class="legend"><span><span class="legend-dot" style="background:#378ADD"></span>In</span><span><span class="legend-dot" style="background:#639922"></span>Out</span></div><div style="position:relative;height:200px"><canvas id="hqWanChart"></canvas></div></div>
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">CPU &amp; memory — 1h</span></div><div class="legend"><span><span class="legend-dot" style="background:#D4537E"></span>CPU</span><span><span class="legend-dot" style="background:#1D9E75"></span>Mem</span></div><div style="position:relative;height:200px"><canvas id="hqResChart"></canvas></div></div>
+  </div>
+  <div class="chart-card"><div class="chart-header"><span class="chart-title">Interfaces</span></div>
+    <table class="iface"><thead><tr><th>Interface</th><th>Status</th><th>Speed</th><th>In (Mbps)</th><th>Out (Mbps)</th><th>Util</th><th>Errors</th></tr></thead><tbody>
+      <tr><td>GigabitEthernet0/0</td><td><span class="badge b-up">up/up</span></td><td>1G</td><td>842</td><td>388</td><td><div class="util-wrap"><div class="util-bar u-warn" style="width:84%"></div></div>84%</td><td>0</td></tr>
+      <tr><td>GigabitEthernet0/1</td><td><span class="badge b-up">up/up</span></td><td>1G</td><td>210</td><td>195</td><td><div class="util-wrap"><div class="util-bar u-ok" style="width:21%"></div></div>21%</td><td>0</td></tr>
+      <tr><td>Tunnel0 (DMVPN hub)</td><td><span class="badge b-up">up/up</span></td><td>—</td><td>310</td><td>290</td><td>—</td><td>0</td></tr>
+      <tr><td>Tunnel1 (MPLS VPN)</td><td><span class="badge b-up">up/up</span></td><td>—</td><td>148</td><td>101</td><td>—</td><td>0</td></tr>
+    </tbody></table>
+  </div>
+  <div class="chart-card"><div class="chart-header"><span class="chart-title">Routing table</span></div>
+    <table class="route"><thead><tr><th>Network</th><th>Protocol</th><th>Next hop</th><th>Interface</th><th>AD/Metric</th></tr></thead><tbody>
+      <tr><td>0.0.0.0/0</td><td><span class="badge b-static">static</span></td><td>203.0.113.1</td><td>Gi0/0</td><td>1/0</td></tr>
+      <tr><td>10.0.0.0/8</td><td><span class="badge b-ospf">OSPF</span></td><td>—</td><td>Gi0/1</td><td>110/2</td></tr>
+      <tr><td>10.1.0.0/16</td><td><span class="badge b-ospf">OSPF</span></td><td>172.16.1.2</td><td>Tunnel0</td><td>110/110</td></tr>
+      <tr><td>192.168.100.0/24</td><td><span class="badge b-bgp">eBGP</span></td><td>203.0.113.1</td><td>Gi0/0</td><td>20/0</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- ════════ CHICAGO ════════════════════════════════════════════════════════ -->
+<div class="page" id="page-chicago">
+  <div class="section-label">CHI-RTR-01 — 10.1.0.1 — Cisco ISR 4331</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">CPU 5-min avg</div><div class="metric-value ok">38%</div></div>
+    <div class="metric-card"><div class="metric-label">Memory used</div><div class="metric-value">31%</div><div class="metric-sub">2.1 GB of 6.8 GB</div></div>
+    <div class="metric-card"><div class="metric-label">Uptime</div><div class="metric-value">87d</div></div>
+    <div class="metric-card"><div class="metric-label">Default route</div><div class="metric-value" style="font-size:13px;font-family:var(--mono);line-height:1.5">0.0.0.0/0<br>via 172.16.0.1</div><div class="metric-sub">Gi0/0 — ISP-B</div></div>
+  </div>
+  <div class="alert-list" style="margin-bottom:1rem">
+    <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>GigabitEthernet0/2</strong> err-disabled — 847 input errors. Check duplex/SFP.</div><div class="alert-time">11:43 — active</div></div></div>
+    <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>Tunnel10 (MPLS VPN)</strong> DOWN — no keepalives from PE 203.0.130.5.</div><div class="alert-time">11:39 — active</div></div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Bandwidth — Gi0/0 WAN</span></div><div class="legend"><span><span class="legend-dot" style="background:#378ADD"></span>In</span><span><span class="legend-dot" style="background:#639922"></span>Out</span></div><div style="position:relative;height:200px"><canvas id="chiWanChart"></canvas></div></div>
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Port utilization</span></div><div style="position:relative;height:200px"><canvas id="chiPortChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ════════ LA ══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-la">
+  <div class="section-label">LAX-RTR-01 — 10.2.0.1 — Cisco ISR 4351</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">CPU 5-min avg</div><div class="metric-value">55%</div></div>
+    <div class="metric-card"><div class="metric-label">Memory used</div><div class="metric-value warn">82%</div><div class="metric-sub">5.7 GB of 7 GB — high</div></div>
+    <div class="metric-card"><div class="metric-label">Uptime</div><div class="metric-value">211d</div></div>
+    <div class="metric-card"><div class="metric-label">Default route</div><div class="metric-value" style="font-size:13px;font-family:var(--mono);line-height:1.5">0.0.0.0/0<br>via 198.51.100.1</div><div class="metric-sub">Gi0/0 — ISP-C</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Bandwidth — Gi0/0 WAN</span></div><div class="legend"><span><span class="legend-dot" style="background:#378ADD"></span>In</span><span><span class="legend-dot" style="background:#639922"></span>Out</span></div><div style="position:relative;height:200px"><canvas id="laxWanChart"></canvas></div></div>
+    <div class="chart-card"><div class="chart-header"><span class="chart-title">Memory — 1h</span></div><div class="legend"><span><span class="legend-dot" style="background:#D85A30"></span>Used %</span><span><span class="legend-dot" style="background:rgba(226,75,74,.5);border:1px dashed #E24B4A"></span>Threshold</span></div><div style="position:relative;height:200px"><canvas id="laxMemChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ════════ ALERTS ══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-alerts">
+  <div class="section-label">Alert center — all sites</div>
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">Critical</div><div class="metric-value danger">2</div></div>
+    <div class="metric-card"><div class="metric-label">Warning</div><div class="metric-value warn">2</div></div>
+    <div class="metric-card"><div class="metric-label">Resolved today</div><div class="metric-value">5</div></div>
+    <div class="metric-card"><div class="metric-label">Avg resolution</div><div class="metric-value">12m</div></div>
+  </div>
+  <div class="chart-card"><div class="chart-header"><span class="chart-title">Active alerts</span></div>
+    <div class="alert-list">
+      <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>CHI-RTR-01 — GigabitEthernet0/2</strong> err-disabled. 847 input errors.</div><div class="alert-time">11:43</div></div></div>
+      <div class="alert-item a-crit"><div class="alert-dot d-crit"></div><div><div><strong>CHI-RTR-01 — Tunnel10</strong> DOWN.</div><div class="alert-time">11:39</div></div></div>
+      <div class="alert-item a-warn"><div class="alert-dot d-warn"></div><div><div><strong>NYC-RTR-01</strong> CPU 74% (threshold 70%).</div><div class="alert-time">11:51</div></div></div>
+      <div class="alert-item a-warn"><div class="alert-dot d-warn"></div><div><div><strong>LAX-RTR-01</strong> Memory 82% (threshold 80%).</div><div class="alert-time">11:48</div></div></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-top:1rem"><div class="chart-header"><span class="chart-title">Alert volume — 7 days</span></div><div class="legend"><span><span class="legend-dot" style="background:#E24B4A"></span>Critical</span><span><span class="legend-dot" style="background:#BA7517"></span>Warning</span></div><div style="position:relative;height:180px"><canvas id="alertTrendChart"></canvas></div></div>
+</div>
+
+<!-- ════════ ADMIN ════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-admin">
+
+  <div id="reloadBanner" class="reload-banner">
+    <span>⚠ Unsaved changes pending — save your settings then click <strong>Reload Services</strong> to apply.</span>
+    <button class="btn btn-secondary btn-sm" onclick="doReload()">Reload now</button>
+  </div>
+
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+      <button class="admin-nav-item active" onclick="showAdmin('devices',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Devices
+      </button>
+      <button class="admin-nav-item" onclick="showAdmin('snmp',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        SNMP credentials
+      </button>
+      <button class="admin-nav-item" onclick="showAdmin('thresholds',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Alert thresholds
+      </button>
+      <button class="admin-nav-item" onclick="showAdmin('email',this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email / SMTP
+      </button>
+
+      <div class="sidebar-divider" style="margin-top:auto"></div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="doReload()" id="reloadBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reload services
+      </button>
+      <div id="reloadFb" class="fb"></div>
+    </div>
+
+    <!-- Panels -->
+    <div style="min-width:0">
+
+      <!-- DEVICES -->
+      <div class="admin-panel active" id="ap-devices">
+        <div class="admin-card">
+          <div class="admin-card-title">Monitored devices</div>
+          <div class="admin-card-desc">One row per Cisco device. Each IP is polled across all five SNMP modules. The hostname is used as a display label. Click Test to verify SNMP connectivity from the monitoring host.</div>
+          <div class="dt-wrap">
+            <table class="dt" id="deviceTable">
+              <thead><tr>
+                <th style="width:148px">Management IP</th>
+                <th style="width:150px">Site name</th>
+                <th style="width:150px">Hostname</th>
+                <th style="width:110px">SNMP</th>
+                <th style="width:72px">Test</th>
+                <th style="width:36px"></th>
+              </tr></thead>
+              <tbody id="deviceRows"></tbody>
+            </table>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="addRow()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add device
+            </button>
+            <button class="btn btn-primary" onclick="saveDevices()">Save devices</button>
+            <div id="deviceFb" class="fb"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SNMP -->
+      <div class="admin-panel" id="ap-snmp">
+        <div class="admin-card">
+          <div class="admin-card-title">SNMP credentials</div>
+          <div class="admin-card-desc">These credentials apply to all devices. Use SNMPv3 for production. Verify connectivity with the Test button in the Devices tab after saving.</div>
+
+          <div class="v-tabs">
+            <button class="v-tab active" id="v2Tab" onclick="setVer('2')">SNMPv2c</button>
+            <button class="v-tab"        id="v3Tab" onclick="setVer('3')">SNMPv3</button>
+          </div>
+
+          <div class="snmp-block on" id="sb2">
+            <div class="form-row single">
+              <div class="form-field">
+                <label class="form-label">Community string <span class="req">*</span></label>
+                <input class="form-input mono" id="community" type="text" placeholder="netwatch_ro">
+                <span class="form-hint">Set on Cisco: snmp-server community netwatch_ro ro ACL_SNMP</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="snmp-block" id="sb3">
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label">Username <span class="req">*</span></label>
+                <input class="form-input mono" id="v3user" type="text" placeholder="netwatch">
+              </div>
+              <div></div>
+            </div>
+            <div class="form-row thirds">
+              <div class="form-field">
+                <label class="form-label">Auth protocol</label>
+                <select class="form-select" id="v3ap">
+                  <option value="SHA">SHA (recommended)</option>
+                  <option value="SHA256">SHA-256</option>
+                  <option value="MD5">MD5 (legacy)</option>
+                </select>
+              </div>
+              <div class="form-field" style="grid-column:span 2">
+                <label class="form-label">Auth password <span class="req">*</span></label>
+                <input class="form-input mono" id="v3auth" type="password" placeholder="••••••••">
+              </div>
+            </div>
+            <div class="form-row thirds">
+              <div class="form-field">
+                <label class="form-label">Priv protocol</label>
+                <select class="form-select" id="v3pp">
+                  <option value="AES">AES-128</option>
+                  <option value="AES256">AES-256</option>
+                  <option value="DES">DES (legacy)</option>
+                </select>
+              </div>
+              <div class="form-field" style="grid-column:span 2">
+                <label class="form-label">Priv password <span class="req">*</span></label>
+                <input class="form-input mono" id="v3priv" type="password" placeholder="••••••••">
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveSnmp()">Save SNMP</button>
+            <div id="snmpFb" class="fb"></div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">Cisco IOS config reference</div>
+          <div class="admin-card-desc">Paste on each device. Replace <code style="font-family:var(--mono);font-size:11px">10.100.0.50</code> with your monitoring host IP.</div>
+          <pre style="background:var(--bg2);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.7;overflow-x:auto">ip access-list standard ACL_SNMP_NETWATCH
+  permit 10.100.0.50
+  deny   any log
+
+snmp-server community netwatch_ro ro ACL_SNMP_NETWATCH
+snmp-server enable traps snmp linkdown linkup
+snmp-server enable traps eigrp
+snmp-server host 10.100.0.50 version 2c netwatch_ro</pre>
+        </div>
+      </div>
+
+      <!-- THRESHOLDS -->
+      <div class="admin-panel" id="ap-thresholds">
+        <div class="admin-card">
+          <div class="admin-card-title">Alert thresholds</div>
+          <div class="admin-card-desc">Drag the sliders to set thresholds. Changes update cisco_alerts.yml and take effect after Reload.</div>
+          <div class="threshold-grid">
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">CPU — warning</span><span class="t-val warn" id="cpuWarnLbl">70%</span></div>
+              <input type="range" class="t-slider" id="cpuWarn" min="10" max="95" value="70" oninput="tslide('cpuWarn','cpuWarnLbl','%')">
+              <div class="t-range"><span>10%</span><span>95%</span></div>
+            </div>
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">CPU — critical</span><span class="t-val danger" id="cpuCritLbl">90%</span></div>
+              <input type="range" class="t-slider" id="cpuCrit" min="10" max="99" value="90" oninput="tslide('cpuCrit','cpuCritLbl','%')">
+              <div class="t-range"><span>10%</span><span>99%</span></div>
+            </div>
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">Memory — warning</span><span class="t-val warn" id="memWarnLbl">80%</span></div>
+              <input type="range" class="t-slider" id="memWarn" min="10" max="99" value="80" oninput="tslide('memWarn','memWarnLbl','%')">
+              <div class="t-range"><span>10%</span><span>99%</span></div>
+            </div>
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">Interface utilization</span><span class="t-val warn" id="utilWarnLbl">85%</span></div>
+              <input type="range" class="t-slider" id="utilWarn" min="10" max="99" value="85" oninput="tslide('utilWarn','utilWarnLbl','%')">
+              <div class="t-range"><span>10%</span><span>99%</span></div>
+            </div>
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">Input errors (per sec)</span><span class="t-val" id="errRateLbl">5</span></div>
+              <input type="range" class="t-slider" id="errRate" min="1" max="100" value="5" oninput="tslide('errRate','errRateLbl','')">
+              <div class="t-range"><span>1</span><span>100</span></div>
+            </div>
+
+            <div class="t-card">
+              <div class="t-header"><span class="t-name">Drop rate (pps)</span><span class="t-val" id="dropRateLbl">10</span></div>
+              <input type="range" class="t-slider" id="dropRate" min="1" max="1000" value="10" oninput="tslide('dropRate','dropRateLbl','')">
+              <div class="t-range"><span>1</span><span>1000</span></div>
+            </div>
+
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveThresholds()">Save thresholds</button>
+            <div id="threshFb" class="fb"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="admin-panel" id="ap-email">
+        <div class="admin-card">
+          <div class="admin-card-title">Email / SMTP settings</div>
+          <div class="admin-card-desc">Critical alerts (interface down, tunnel down, EIGRP lost, default route gone) go to the critical address. Warnings go to the warnings address.</div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">SMTP host <span class="req">*</span></label>
+              <input class="form-input mono" id="smtpHost" type="text" placeholder="smtp.office365.com">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Port</label>
+              <input class="form-input mono" id="smtpPort" type="number" value="587" min="1" max="65535">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">From address <span class="req">*</span></label>
+              <input class="form-input" id="smtpFrom" type="email" placeholder="netwatch@yourcompany.com">
+            </div>
+            <div class="form-field">
+              <label class="form-label">SMTP username</label>
+              <input class="form-input" id="smtpUser" type="text" placeholder="netwatch@yourcompany.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">SMTP password</label>
+              <input class="form-input mono" id="smtpPass" type="password" placeholder="••••••••">
+            </div>
+            <div class="form-field">
+              <label class="form-label">TLS</label>
+              <div class="form-toggle">
+                <input type="checkbox" class="toggle" id="smtpTls" checked>
+                <label class="toggle-lbl" for="smtpTls">Require STARTTLS</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">Warnings recipient <span class="req">*</span></label>
+              <input class="form-input" id="emailWarn" type="email" placeholder="network-alerts@yourcompany.com">
+              <span class="form-hint">High CPU, memory, utilization, interface errors</span>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Critical recipient <span class="req">*</span></label>
+              <input class="form-input" id="emailCrit" type="email" placeholder="noc@yourcompany.com">
+              <span class="form-hint">Interface/tunnel down, EIGRP lost, default route gone</span>
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-field">
+              <label class="form-label">Grafana URL <span style="font-weight:400;color:var(--text3)">(linked in critical emails)</span></label>
+              <input class="form-input mono" id="grafanaUrl" type="text" placeholder="http://10.100.0.50:3000">
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveEmail()">Save email settings</button>
+            <button class="btn btn-secondary" onclick="testEmail()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+              Send test email
+            </button>
+            <div id="emailFb" class="fb"></div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">Alert routing reference</div>
+          <table class="iface"><thead><tr><th>Alert</th><th>Severity</th><th>Goes to</th></tr></thead><tbody>
+            <tr><td>PhysicalInterfaceDown</td><td><span class="badge b-down">critical</span></td><td>Critical recipient</td></tr>
+            <tr><td>TunnelDown</td><td><span class="badge b-down">critical</span></td><td>Critical recipient</td></tr>
+            <tr><td>EIGRPNeighborLost</td><td><span class="badge b-down">critical</span></td><td>Critical recipient</td></tr>
+            <tr><td>DefaultRouteGone</td><td><span class="badge b-down">critical</span></td><td>Critical recipient</td></tr>
+            <tr><td>CriticalCPU (&gt;90%)</td><td><span class="badge b-down">critical</span></td><td>Critical recipient</td></tr>
+            <tr><td>HighCPU / HighMemory</td><td><span class="badge" style="background:var(--warn-bg);color:var(--warn)">warning</span></td><td>Warnings recipient</td></tr>
+            <tr><td>HighInterfaceUtilization</td><td><span class="badge" style="background:var(--warn-bg);color:var(--warn)">warning</span></td><td>Warnings recipient</td></tr>
+            <tr><td>InterfaceErrors / Drops</td><td><span class="badge" style="background:var(--warn-bg);color:var(--warn)">warning</span></td><td>Warnings recipient</td></tr>
+            <tr><td>EIGRPNeighborFlapping</td><td><span class="badge" style="background:var(--warn-bg);color:var(--warn)">warning</span></td><td>Warnings recipient</td></tr>
+            <tr><td>DefaultRouteNextHopChanged</td><td><span class="badge" style="background:var(--warn-bg);color:var(--warn)">warning</span></td><td>Warnings recipient</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+
+    </div><!-- /panels -->
+  </div><!-- /admin-layout -->
+</div><!-- /page-admin -->
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════════════════ */
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'admin') loadConfig();
+}
+function switchTo(id) {
+  const t = [...document.querySelectorAll('.nav-tab')].find(t =>
+    (t.getAttribute('onclick')||'').includes("'"+id+"'"));
+  if (t) showPage(id, t);
+}
+function showAdmin(id, btn) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('ap-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   API
+═══════════════════════════════════════════════════════════════════════════ */
+const API_BASE = `http://${location.hostname}:9199`;
+let _online = false;
+let _dirty  = false;
+
+async function api(path, opts = {}) {
+  return fetch(API_BASE + path, { headers:{'Content-Type':'application/json'}, ...opts }).then(r => r.json());
+}
+
+function fb(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg; el.className = `fb show ${type}`;
+  if (type !== 'loading') setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function setDirty() {
+  _dirty = true;
+  document.getElementById('reloadBanner').classList.add('show');
+}
+
+async function pingApi() {
+  const dot = document.getElementById('apiDot');
+  const lbl = document.getElementById('apiLabel');
+  try {
+    await api('/api/status');
+    _online = true;
+    dot.className = 'api-dot';
+    lbl.textContent = 'API connected';
+  } catch {
+    _online = false;
+    dot.className = 'api-dot offline';
+    lbl.textContent = 'API offline — view only';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOAD CONFIG
+═══════════════════════════════════════════════════════════════════════════ */
+async function loadConfig() {
+  if (!_online) return;
+  try {
+    const c = await api('/api/config');
+    buildDeviceTable(c.devices || []);
+    fillSnmp(c.snmp || {});
+    fillThresholds(c.thresholds || {});
+    fillEmail(c.email || {});
+  } catch(e) { console.warn('loadConfig:', e); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DEVICES
+═══════════════════════════════════════════════════════════════════════════ */
+function buildDeviceTable(rows) {
+  document.getElementById('deviceRows').innerHTML = '';
+  rows.forEach(r => addRow(r));
+  if (!rows.length) addRow();
+}
+
+function addRow(d = {}) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="td-in mono" data-f="ip"       value="${d.ip||''}"       placeholder="10.0.0.1"></td>
+    <td><input class="td-in"      data-f="site"     value="${d.site||''}"     placeholder="New York"></td>
+    <td><input class="td-in mono" data-f="hostname" value="${d.hostname||''}" placeholder="NYC-RTR-01"></td>
+    <td>
+      <select class="td-in" data-f="snmp_profile">
+        <option value="v2_netwatch" ${(d.snmp_profile||'v2_netwatch')==='v2_netwatch'?'selected':''}>v2c</option>
+        <option value="v3_netwatch" ${d.snmp_profile==='v3_netwatch'?'selected':''}>v3</option>
+      </select>
+    </td>
+    <td>
+      <button class="btn btn-secondary btn-sm" onclick="testSnmp(this)" title="Test SNMP">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Test
+      </button>
+    </td>
+    <td>
+      <button class="btn-icon" onclick="this.closest('tr').remove()" title="Remove">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </td>`;
+  document.getElementById('deviceRows').appendChild(tr);
+}
+
+function getDevices() {
+  return [...document.querySelectorAll('#deviceRows tr')].map(tr => ({
+    ip:           tr.querySelector('[data-f="ip"]')?.value.trim()||'',
+    site:         tr.querySelector('[data-f="site"]')?.value.trim()||'',
+    hostname:     tr.querySelector('[data-f="hostname"]')?.value.trim()||'',
+    snmp_profile: tr.querySelector('[data-f="snmp_profile"]')?.value||'v2_netwatch',
+  })).filter(d => d.ip);
+}
+
+async function saveDevices() {
+  fb('deviceFb','Saving…','loading');
+  try {
+    const r = await api('/api/devices',{method:'POST',body:JSON.stringify({devices:getDevices()})});
+    fb('deviceFb', r.ok ? `Saved ${r.count} device(s). Reload to apply.` : r.error, r.ok?'ok':'err');
+    if(r.ok) setDirty();
+  } catch { fb('deviceFb','API unreachable — is netwatch-api.py running?','err'); }
+}
+
+async function testSnmp(btn) {
+  const ip = btn.closest('tr').querySelector('[data-f="ip"]')?.value.trim();
+  if (!ip) { alert('Enter an IP first.'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = await api('/api/test-snmp',{method:'POST',body:JSON.stringify({ip})});
+    btn.textContent = r.ok ? '✓ OK' : '✗ Fail';
+    btn.style.color = r.ok ? 'var(--ok)' : 'var(--danger)';
+    btn.title = r.ok ? r.message : r.error;
+    setTimeout(()=>{ btn.textContent='Test'; btn.style.color=''; btn.disabled=false; },4000);
+  } catch { btn.textContent='✗'; setTimeout(()=>{ btn.textContent='Test'; btn.disabled=false; },3000); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SNMP
+═══════════════════════════════════════════════════════════════════════════ */
+let _ver = '2';
+function setVer(v) {
+  _ver = v;
+  document.getElementById('sb2').className = 'snmp-block' + (v==='2'?' on':'');
+  document.getElementById('sb3').className = 'snmp-block' + (v==='3'?' on':'');
+  document.getElementById('v2Tab').className = 'v-tab' + (v==='2'?' active':'');
+  document.getElementById('v3Tab').className = 'v-tab' + (v==='3'?' active':'');
+}
+
+function fillSnmp(s) {
+  setVer(s.version||'2');
+  document.getElementById('community').value = s.community||'';
+  document.getElementById('v3user').value    = s.v3_username||'';
+  document.getElementById('v3ap').value      = s.v3_auth_protocol||'SHA';
+  document.getElementById('v3auth').value    = s.v3_auth_password||'';
+  document.getElementById('v3pp').value      = s.v3_priv_protocol||'AES';
+  document.getElementById('v3priv').value    = s.v3_priv_password||'';
+}
+
+async function saveSnmp() {
+  const snmp = {
+    version:          _ver,
+    community:        document.getElementById('community').value.trim(),
+    v3_username:      document.getElementById('v3user').value.trim(),
+    v3_auth_protocol: document.getElementById('v3ap').value,
+    v3_auth_password: document.getElementById('v3auth').value,
+    v3_priv_protocol: document.getElementById('v3pp').value,
+    v3_priv_password: document.getElementById('v3priv').value,
+  };
+  fb('snmpFb','Saving…','loading');
+  try {
+    const r = await api('/api/snmp',{method:'POST',body:JSON.stringify({snmp})});
+    fb('snmpFb', r.ok ? 'SNMP saved. Reload to apply.' : r.error, r.ok?'ok':'err');
+    if(r.ok) setDirty();
+  } catch { fb('snmpFb','API unreachable','err'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THRESHOLDS
+═══════════════════════════════════════════════════════════════════════════ */
+function tslide(sid, lid, sfx) {
+  document.getElementById(lid).textContent = document.getElementById(sid).value + sfx;
+}
+
+function fillThresholds(t) {
+  const s = (id, lbl, v, sfx) => { document.getElementById(id).value=v; document.getElementById(lbl).textContent=v+sfx; };
+  s('cpuWarn','cpuWarnLbl', t.cpu_warn??70,  '%');
+  s('cpuCrit','cpuCritLbl', t.cpu_crit??90,  '%');
+  s('memWarn','memWarnLbl', t.mem_warn??80,  '%');
+  s('utilWarn','utilWarnLbl',t.util_warn??85,'%');
+  s('errRate','errRateLbl', t.error_rate??5, '');
+  s('dropRate','dropRateLbl',t.drop_rate??10,'');
+}
+
+async function saveThresholds() {
+  const thresholds = {
+    cpu_warn:   +document.getElementById('cpuWarn').value,
+    cpu_crit:   +document.getElementById('cpuCrit').value,
+    mem_warn:   +document.getElementById('memWarn').value,
+    util_warn:  +document.getElementById('utilWarn').value,
+    error_rate: +document.getElementById('errRate').value,
+    drop_rate:  +document.getElementById('dropRate').value,
+  };
+  fb('threshFb','Saving…','loading');
+  try {
+    const r = await api('/api/thresholds',{method:'POST',body:JSON.stringify({thresholds})});
+    fb('threshFb', r.ok ? 'Thresholds saved. Reload to apply.' : r.error, r.ok?'ok':'err');
+    if(r.ok) setDirty();
+  } catch { fb('threshFb','API unreachable','err'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMAIL
+═══════════════════════════════════════════════════════════════════════════ */
+function fillEmail(e) {
+  document.getElementById('smtpHost').value  = e.smtp_host||'';
+  document.getElementById('smtpPort').value  = e.smtp_port||587;
+  document.getElementById('smtpFrom').value  = e.smtp_from||'';
+  document.getElementById('smtpUser').value  = e.smtp_username||'';
+  document.getElementById('smtpPass').value  = e.smtp_password||'';
+  document.getElementById('smtpTls').checked = e.smtp_tls!==false;
+  document.getElementById('emailWarn').value = e.to_warnings||'';
+  document.getElementById('emailCrit').value = e.to_critical||'';
+  document.getElementById('grafanaUrl').value= e.grafana_url||'';
+}
+
+async function saveEmail() {
+  const email = {
+    smtp_host:     document.getElementById('smtpHost').value.trim(),
+    smtp_port:     +document.getElementById('smtpPort').value,
+    smtp_from:     document.getElementById('smtpFrom').value.trim(),
+    smtp_username: document.getElementById('smtpUser').value.trim(),
+    smtp_password: document.getElementById('smtpPass').value,
+    smtp_tls:      document.getElementById('smtpTls').checked,
+    to_warnings:   document.getElementById('emailWarn').value.trim(),
+    to_critical:   document.getElementById('emailCrit').value.trim(),
+    grafana_url:   document.getElementById('grafanaUrl').value.trim(),
+  };
+  fb('emailFb','Saving…','loading');
+  try {
+    const r = await api('/api/email',{method:'POST',body:JSON.stringify({email})});
+    fb('emailFb', r.ok ? 'Email settings saved. Reload to apply.' : r.error, r.ok?'ok':'err');
+    if(r.ok) setDirty();
+  } catch { fb('emailFb','API unreachable','err'); }
+}
+
+async function testEmail() {
+  fb('emailFb','Sending test email…','loading');
+  try {
+    const r = await api('/api/test-email',{method:'POST',body:'{}'});
+    fb('emailFb', r.ok ? r.message : r.error, r.ok?'ok':'err');
+  } catch { fb('emailFb','API unreachable','err'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RELOAD
+═══════════════════════════════════════════════════════════════════════════ */
+async function doReload() {
+  const btn = document.getElementById('reloadBtn');
+  btn.disabled = true;
+  fb('reloadFb','Reloading services…','loading');
+  try {
+    const r = await api('/api/reload',{method:'POST',body:'{}'});
+    const msg = r.ok ? 'All services reloaded.' : `Reload failed: ${r.error || (r.output||'').slice(0,100)}`;
+    fb('reloadFb', msg, r.ok?'ok':'err');
+    if(r.ok){ _dirty=false; document.getElementById('reloadBanner').classList.remove('show'); }
+  } catch { fb('reloadFb','API unreachable — run manually: sudo bash /opt/netwatch/reload.sh','err'); }
+  btn.disabled = false;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════════════════════════ */
+const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+const gc   = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tc   = '#888780';
+const hrs  = Array.from({length:12},(_,i)=>{const d=new Date();d.setMinutes(d.getMinutes()-(11-i)*5);return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');});
+const rnd  = (b,v,n=12)=>Array.from({length:n},()=>Math.round(b+(Math.random()-.5)*v));
+
+const lo = {
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+  elements:{point:{radius:0,hoverRadius:4},line:{tension:.35,borderWidth:1.5}},
+  scales:{
+    x:{grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:6}},
+    y:{grid:{color:gc},ticks:{color:tc,font:{size:10}}}
+  }
+};
+
+function ln(id, ds, yo={}) {
+  const c=document.getElementById(id);if(!c)return;
+  const o=JSON.parse(JSON.stringify(lo));Object.assign(o.scales.y,yo);
+  new Chart(c,{type:'line',data:{labels:hrs,datasets:ds},options:o});
+}
+function bar(id, labels, datasets, xo={}, yo={}) {
+  const c=document.getElementById(id);if(!c)return;
+  new Chart(c,{type:'bar',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false},ticks:{color:tc,font:{size:10}},...xo},
+            y:{grid:{color:gc},ticks:{color:tc,font:{size:10}},...yo}}
+  }});
+}
+
+ln('fleetBwChart',[
+  {label:'In', data:rnd(1450,320),borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,.07)',fill:true},
+  {label:'Out',data:rnd(930,210), borderColor:'#639922',backgroundColor:'rgba(99,153,34,.05)', fill:true}
+]);
+
+(()=>{
+  const v=[74,38,55,12,18,22,45,29,33];
+  bar('cpuBarChart',['NYC-RTR','CHI-RTR','LAX-RTR','NYC-SW','CHI-SW','LAX-SW','NYC-FW','CHI-FW','LAX-FW'],
+    [{data:v,backgroundColor:v.map(x=>x>70?'#E24B4A':x>50?'#BA7517':'#639922'),borderRadius:3}],
+    {},{ticks:{callback:x=>x+'%',color:tc,font:{size:10}},max:100});
+})();
+
+ln('hqWanChart',[
+  {label:'In', data:rnd(840,90), borderColor:'#378ADD',fill:false},
+  {label:'Out',data:rnd(385,65), borderColor:'#639922',fill:false},
+  {label:'Threshold',data:Array(12).fill(900),borderColor:'#E24B4A',borderDash:[5,4],fill:false,borderWidth:1}
+]);
+ln('hqResChart',[
+  {label:'CPU',data:rnd(72,11),borderColor:'#D4537E',fill:false},
+  {label:'Mem',data:rnd(47,4), borderColor:'#1D9E75',fill:false},
+  {label:'Threshold',data:Array(12).fill(70),borderColor:'#E24B4A',borderDash:[5,4],fill:false,borderWidth:1}
+],{max:100,ticks:{callback:x=>x+'%',color:tc,font:{size:10}}});
+
+ln('chiWanChart',[
+  {label:'In', data:rnd(215,45),borderColor:'#378ADD',fill:false},
+  {label:'Out',data:rnd(188,38),borderColor:'#639922',fill:false}
+]);
+
+bar('chiPortChart',['Gi0/0','Gi0/1','Gi0/2','Tu0','Tu10'],[
+  {label:'In %', data:[22,9,0,6,0],backgroundColor:['#378ADD','#378ADD','#E24B4A','#378ADD','#E24B4A'],borderRadius:3},
+  {label:'Out %',data:[19,7,0,5,0],backgroundColor:['#85B7EB','#85B7EB','rgba(226,75,74,.4)','#85B7EB','rgba(226,75,74,.4)'],borderRadius:3}
+],{},{ticks:{callback:x=>x+'%',color:tc,font:{size:10}},max:35});
+
+ln('laxWanChart',[
+  {label:'In', data:rnd(390,55),borderColor:'#378ADD',fill:false},
+  {label:'Out',data:rnd(342,48),borderColor:'#639922',fill:false}
+]);
+(()=>{const b=rnd(79,5);b[11]=82;ln('laxMemChart',[
+  {label:'Used',      data:b,                borderColor:'#D85A30',backgroundColor:'rgba(216,90,48,.07)',fill:true},
+  {label:'Threshold', data:Array(12).fill(80),borderColor:'#E24B4A',borderDash:[5,4],fill:false,borderWidth:1}
+],{max:100,min:60,ticks:{callback:x=>x+'%',color:tc,font:{size:10}}});})();
+
+bar('alertTrendChart',['Mar 27','Mar 28','Mar 29','Mar 30','Mar 31','Apr 1','Apr 2'],[
+  {label:'Critical',data:[0,1,0,2,0,1,2],backgroundColor:'#E24B4A',borderRadius:3},
+  {label:'Warning', data:[2,1,3,1,2,3,2],backgroundColor:'#BA7517',borderRadius:3}
+],{stacked:true},{stacked:true,ticks:{stepSize:1,color:tc,font:{size:10}}});
+
+/* init */
+pingApi();
+setInterval(pingApi, 30000);
+buildDeviceTable([
+  {ip:'10.0.0.1',site:'New York',   hostname:'NYC-RTR-01',snmp_profile:'v2_netwatch'},
+  {ip:'10.1.0.1',site:'Chicago',    hostname:'CHI-RTR-01',snmp_profile:'v2_netwatch'},
+  {ip:'10.2.0.1',site:'Los Angeles',hostname:'LAX-RTR-01',snmp_profile:'v2_netwatch'},
+]);
+</script>
+</body>
+</html>

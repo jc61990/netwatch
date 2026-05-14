@@ -131,9 +131,11 @@ setup_system() {
     step "Installing dependencies..."
     if [[ "$PKG_MANAGER" == "apt" ]]; then
         $PKG_INSTALL curl wget tar gzip adduser net-tools snmp \
-            apt-transport-https gnupg2 software-properties-common python3
+            apt-transport-https gnupg2 software-properties-common \
+            python3 python3-venv python3-full
     else
-        $PKG_INSTALL curl wget tar gzip net-tools net-snmp net-snmp-utils python3
+        $PKG_INSTALL curl wget tar gzip net-tools net-snmp net-snmp-utils \
+            python3 python3-virtualenv
     fi
 
     step "Creating service accounts..."
@@ -1129,6 +1131,87 @@ configure_firewall() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 7. ADMIN API (Python venv + systemd unit)
+# ─────────────────────────────────────────────────────────────────────────────
+install_api() {
+    header "Installing NetWatch Admin API"
+
+    local venv="${INSTALL_DIR}/venv"
+    local api_script="${INSTALL_DIR}/netwatch-api.py"
+    local pip_opts=""
+
+    # ── Copy API script ───────────────────────────────────────────────────────
+    local src_dir
+    src_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts"
+    if [[ -f "${src_dir}/netwatch-api.py" ]]; then
+        cp "${src_dir}/netwatch-api.py" "${api_script}"
+        chmod 755 "${api_script}"
+        step "netwatch-api.py copied to ${api_script}"
+    else
+        warn "scripts/netwatch-api.py not found — skipping (copy it manually to ${api_script})"
+        return
+    fi
+
+    # Copy dashboard HTML so the API can serve it at /
+    local src_html
+    src_html="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/netwatch-dashboard.html"
+    if [[ -f "${src_html}" ]]; then
+        cp "${src_html}" "${INSTALL_DIR}/netwatch-dashboard.html"
+        step "netwatch-dashboard.html copied to ${INSTALL_DIR}/"
+    fi
+
+    # ── Create virtual environment ────────────────────────────────────────────
+    if [[ ! -d "${venv}" ]]; then
+        step "Creating Python venv at ${venv}..."
+        python3 -m venv "${venv}"
+        success "venv created"
+    else
+        info "venv already exists at ${venv} — reusing"
+    fi
+
+    # ── Install Flask into the venv ───────────────────────────────────────────
+    # Pass --insecure equivalent (--trusted-host) if SSL verification is disabled
+    if $ALLOW_INSECURE; then
+        pip_opts="--trusted-host pypi.org --trusted-host files.pythonhosted.org"
+    fi
+
+    step "Installing Flask into venv..."
+    # shellcheck disable=SC2086
+    "${venv}/bin/pip" install --quiet --upgrade pip ${pip_opts}
+    # shellcheck disable=SC2086
+    "${venv}/bin/pip" install --quiet flask flask-cors ${pip_opts}
+    success "Flask installed into venv"
+
+    # ── Write systemd unit ────────────────────────────────────────────────────
+    cat > "${SYSTEMD_DIR}/netwatch-api.service" << EOF
+[Unit]
+Description=NetWatch Admin API
+Documentation=https://github.com/youruser/netwatch
+After=network.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=${venv}/bin/python ${api_script} --host 0.0.0.0 --port 9199
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    step "systemd unit written → ${SYSTEMD_DIR}/netwatch-api.service"
+
+    systemctl daemon-reload
+    systemctl enable --now netwatch-api
+    success "netwatch-api service enabled and started"
+    info "Admin UI available at: http://$(hostname -I | awk '{print $1}'):9199/"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 8. HELPER SCRIPTS + METADATA
 # ─────────────────────────────────────────────────────────────────────────────
 install_helpers() {
@@ -1193,6 +1276,13 @@ print_summary() {
     echo ""
     echo -e "${BOLD}Next steps — edit these config files:${RESET}"
     echo ""
+    echo -e "${BOLD}Next steps — easiest path is the Admin UI:${RESET}"
+    echo ""
+    echo -e "  ${GREEN}Admin UI:${RESET}  http://${host_ip}:9199/  → ⚙ Admin tab"
+    echo -e "             Devices · SNMP · Thresholds · Email → Reload Services"
+    echo ""
+    echo -e "  ${CYAN}Or edit config files directly:${RESET}"
+    echo ""
     echo -e "  ${CYAN}1. SNMP credentials${RESET}"
     echo -e "     ${CONFIG_DIR}/snmp_exporter/snmp.yml"
     echo -e "     → Replace CHANGEME_community_string (v2c) or v3 credentials"
@@ -1205,14 +1295,12 @@ print_summary() {
     echo -e "     ${CONFIG_DIR}/alertmanager/alertmanager.yml"
     echo -e "     → Replace CHANGEME_smtp_host, credentials, and recipient addresses"
     echo ""
-    echo -e "  ${CYAN}4. Grafana link in critical emails${RESET}"
-    echo -e "     ${CONFIG_DIR}/alertmanager/alertmanager.yml"
-    echo -e "     → Replace CHANGEME_grafana_host with ${host_ip}"
-    echo ""
     echo -e "${BOLD}Then reload:${RESET}"
     echo -e "     ${CYAN}sudo bash ${INSTALL_DIR}/reload.sh${RESET}"
     echo ""
-    echo -e "${BOLD}Grafana:${RESET}  http://${host_ip}:3000  (admin / admin — change on first login)"
+    echo -e "${BOLD}URLs:${RESET}"
+    echo -e "     Admin UI:  http://${host_ip}:9199/   (config + dashboard)"
+    echo -e "     Grafana:   http://${host_ip}:3000/   (admin / admin — change on first login)"
     echo ""
     echo -e "${BOLD}Helper scripts (in ${INSTALL_DIR}/):${RESET}"
     echo -e "     reload.sh        — validate configs and hot-reload all services"
@@ -1222,12 +1310,13 @@ print_summary() {
     echo -e "     update.sh        — upgrade binaries (--snmp/--prom/--am flags)"
     echo ""
     echo -e "${BOLD}Logs:${RESET}"
+    echo -e "     journalctl -fu netwatch-api"
     echo -e "     journalctl -fu prometheus"
     echo -e "     journalctl -fu snmp_exporter"
     echo -e "     journalctl -fu alertmanager"
     echo -e "     journalctl -fu grafana-server"
     echo ""
-    echo -e "${YELLOW}NOTE:${RESET} Services may show warnings in logs until CHANGEME placeholders are replaced."
+    echo -e "${YELLOW}NOTE:${RESET} Services may show warnings until CHANGEME placeholders are replaced."
     echo ""
 }
 
@@ -1257,6 +1346,7 @@ main() {
     write_systemd_units
     configure_firewall
     enable_services
+    install_api
     install_helpers
     print_summary
 }

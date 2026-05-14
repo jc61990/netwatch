@@ -14,10 +14,11 @@
 set -euo pipefail
 
 # ── Pinned versions ───────────────────────────────────────────────────────────
-SNMP_EXPORTER_VERSION="0.26.0"
-PROMETHEUS_VERSION="2.51.2"
+SNMP_EXPORTER_VERSION="0.27.0"
+PROMETHEUS_VERSION="2.53.3"
 ALERTMANAGER_VERSION="0.27.0"
-ARCH="amd64"
+# Auto-detect architecture (amd64 or arm64)
+ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 INSTALL_DIR="/opt/netwatch"
@@ -34,6 +35,7 @@ info()    { echo -e "${CYAN}[INFO]${RESET}  $*"; }
 success() { echo -e "${GREEN}[OK]${RESET}    $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${RESET}  $*"; }
 error()   { echo -e "${RED}[ERROR]${RESET} $*" >&2; exit 1; }
+die()     { echo -e "${RED}[ERROR]${RESET} $*" >&2; exit 1; }
 header()  { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 step()    { echo -e "${BOLD}  →${RESET} $*"; }
 
@@ -135,16 +137,84 @@ fetch_release() {
     fi
 
     step "Downloading ${label}..."
-    local tmp
+    local tmp archive
     tmp=$(mktemp -d)
+    archive="${tmp}/archive.tar.gz"
+    # shellcheck disable=SC2064
     trap "rm -rf ${tmp}" RETURN
 
-    wget -q --show-progress -O "${tmp}/archive.tar.gz" "$url" 2>&1 \
-        | grep -v "^$" || true
-    tar -xzf "${tmp}/archive.tar.gz" -C "$tmp" --strip-components=1
+    # ── Download with up to 3 attempts ────────────────────────────────────────
+    local attempt=0
+    while true; do
+        attempt=$(( attempt + 1 ))
+        step "  Attempt ${attempt}/3: ${url}"
 
+        # Use curl: -L follows redirects, -f fails on HTTP errors (4xx/5xx),
+        # --retry 2 handles transient TCP resets, -S shows error on failure.
+        # Do NOT pipe into grep — that swallows the exit code.
+        if curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 15 \
+                --max-time 120 -o "${archive}" "${url}"; then
+
+            # Sanity check: a valid gzip tarball is at least 1 MB
+            local size
+            size=$(stat -c%s "${archive}" 2>/dev/null || echo 0)
+            if (( size < 1048576 )); then
+                warn "  Download too small (${size} bytes) — likely a partial download or 404 page"
+                rm -f "${archive}"
+                if (( attempt >= 3 )); then
+                    die "Failed to download ${label} after 3 attempts.\n  URL: ${url}\n  Check the version number and your internet connection."
+                fi
+                step "  Retrying in 5 seconds..."
+                sleep 5
+                continue
+            fi
+
+            # Verify the archive is a valid gzip before extracting
+            if ! gzip -t "${archive}" 2>/dev/null; then
+                warn "  Downloaded file is not a valid gzip archive"
+                rm -f "${archive}"
+                if (( attempt >= 3 )); then
+                    die "Corrupt download for ${label} after 3 attempts.\n  URL: ${url}"
+                fi
+                sleep 5
+                continue
+            fi
+
+            break  # success
+        else
+            local curl_exit=$?
+            warn "  curl failed (exit ${curl_exit})"
+            rm -f "${archive}"
+            if (( attempt >= 3 )); then
+                die "Failed to download ${label} after 3 attempts (curl exit ${curl_exit}).\n  URL: ${url}\n  Check DNS, firewall, and proxy settings."
+            fi
+            step "  Retrying in 5 seconds..."
+            sleep 5
+        fi
+    done
+
+    # ── Extract ───────────────────────────────────────────────────────────────
+    step "  Extracting..."
+    if ! tar -xzf "${archive}" -C "${tmp}" --strip-components=1 2>/dev/null; then
+        # Some releases nest differently — try without strip
+        if ! tar -xzf "${archive}" -C "${tmp}" 2>/dev/null; then
+            die "Failed to extract ${label}. Archive may be corrupt."
+        fi
+    fi
+
+    # ── Install binaries ──────────────────────────────────────────────────────
     for bin in "$@"; do
-        install -o "$owner" -g "$owner" -m 755 "${tmp}/${bin}" "${BIN_DIR}/${bin}"
+        # Find the binary anywhere under tmp (handles variable nesting)
+        local bin_path
+        bin_path=$(find "${tmp}" -type f -name "${bin}" | head -1)
+        if [[ -z "${bin_path}" ]]; then
+            die "Binary '${bin}' not found in ${label} archive. The release layout may have changed."
+        fi
+        install -o root -g root -m 755 "${bin_path}" "${BIN_DIR}/${bin}"
+        # Fix ownership after install
+        if id "${owner}" &>/dev/null; then
+            chown "${owner}:${owner}" "${BIN_DIR}/${bin}"
+        fi
         step "  Installed: ${BIN_DIR}/${bin}"
     done
 

@@ -36,18 +36,37 @@ UPGRADE_SNMP=false
 UPGRADE_PROM=false
 UPGRADE_AM=false
 
+# ── SSL / proxy options ───────────────────────────────────────────────────────
+CURL_EXTRA_OPTS=""
+ALLOW_INSECURE=false
+
+_detect_ca_bundle() {
+    if [[ -n "${CURL_CA_BUNDLE:-}" ]]; then echo "--cacert ${CURL_CA_BUNDLE}"; return; fi
+    [[ -f /etc/ssl/certs/ca-certificates.crt ]]    && echo "--cacert /etc/ssl/certs/ca-certificates.crt" && return
+    [[ -f /etc/pki/tls/certs/ca-bundle.crt ]]      && echo "--cacert /etc/pki/tls/certs/ca-bundle.crt"  && return
+    echo ""
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --snmp) SNMP_VER="$2"; UPGRADE_SNMP=true; shift 2 ;;
         --prom) PROM_VER="$2"; UPGRADE_PROM=true; shift 2 ;;
         --am)   AM_VER="$2";   UPGRADE_AM=true;   shift 2 ;;
         --all)  UPGRADE_SNMP=true; UPGRADE_PROM=true; UPGRADE_AM=true; shift ;;
+        --insecure|-k) ALLOW_INSECURE=true; shift ;;
         --help|-h)
-            echo "Usage: sudo bash update.sh [--snmp X.Y.Z] [--prom X.Y.Z] [--am X.Y.Z] [--all]"
+            echo "Usage: sudo bash update.sh [--snmp X.Y.Z] [--prom X.Y.Z] [--am X.Y.Z] [--all] [--insecure]"
             exit 0 ;;
         *) echo "Unknown flag: $1  (try --help)"; exit 1 ;;
     esac
 done
+
+if $ALLOW_INSECURE; then
+    warn "SSL certificate verification DISABLED (--insecure)"
+    CURL_EXTRA_OPTS="-k"
+else
+    CURL_EXTRA_OPTS="$(_detect_ca_bundle)"
+fi
 
 # No flags = upgrade all
 if ! $UPGRADE_SNMP && ! $UPGRADE_PROM && ! $UPGRADE_AM; then
@@ -76,7 +95,8 @@ fetch() {
         attempt=$(( attempt + 1 ))
         step "Attempt ${attempt}/3..."
 
-        if curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 15 \
+        # shellcheck disable=SC2086
+        if curl -fsSL ${CURL_EXTRA_OPTS} --connect-timeout 15 \
                 --max-time 120 -o "${archive}" "${url}"; then
 
             local size
@@ -98,8 +118,11 @@ fetch() {
             break
         else
             local ec=$?
-            warn "curl failed (exit ${ec})"
             rm -f "${archive}"
+            if (( ec == 60 )); then
+                err "SSL certificate verification failed (curl exit 60).\n\n  Your network uses SSL inspection with a corporate CA.\n  Fix options:\n    sudo bash update.sh --insecure                         (quick workaround)\n    sudo CURL_CA_BUNDLE=/path/to/corp-ca.pem bash update.sh  (proper fix)"
+            fi
+            warn "curl failed (exit ${ec})"
             (( attempt >= 3 )) && err "Download failed after 3 attempts (curl exit ${ec}).\n  URL: ${url}"
             sleep 5
         fi

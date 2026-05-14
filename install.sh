@@ -42,6 +42,54 @@ step()    { echo -e "${BOLD}  →${RESET} $*"; }
 # ── Root guard ────────────────────────────────────────────────────────────────
 [[ $EUID -ne 0 ]] && error "Run as root: sudo bash install.sh"
 
+# ── SSL / proxy options ───────────────────────────────────────────────────────
+# If your network uses SSL inspection (corporate proxy with self-signed cert),
+# set CURL_CA_BUNDLE to your corporate CA bundle, or pass --insecure to skip
+# certificate verification entirely (not recommended for production).
+#
+#   sudo CURL_CA_BUNDLE=/etc/ssl/certs/corporate-ca.pem bash install.sh
+#   sudo bash install.sh --insecure
+#
+CURL_EXTRA_OPTS=""
+ALLOW_INSECURE=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --insecure|-k) ALLOW_INSECURE=true ;;
+    esac
+done
+
+# Build CA bundle option — check common corporate CA locations
+_detect_ca_bundle() {
+    # 1. Explicit env var wins
+    if [[ -n "${CURL_CA_BUNDLE:-}" ]]; then
+        echo "--cacert ${CURL_CA_BUNDLE}"
+        return
+    fi
+    # 2. Corporate CAs added via update-ca-certificates live here on Ubuntu/Debian
+    if [[ -f /etc/ssl/certs/ca-certificates.crt ]]; then
+        echo "--cacert /etc/ssl/certs/ca-certificates.crt"
+        return
+    fi
+    # 3. RHEL/Rocky/Alma
+    if [[ -f /etc/pki/tls/certs/ca-bundle.crt ]]; then
+        echo "--cacert /etc/pki/tls/certs/ca-bundle.crt"
+        return
+    fi
+    # No explicit bundle — let curl use its compiled-in default
+    echo ""
+}
+
+if $ALLOW_INSECURE; then
+    warn "SSL certificate verification DISABLED (--insecure). Use only on trusted networks."
+    CURL_EXTRA_OPTS="-k"
+else
+    CURL_EXTRA_OPTS="$(_detect_ca_bundle)"
+    if [[ -n "${CURL_EXTRA_OPTS}" ]]; then
+        info "Using CA bundle: ${CURL_EXTRA_OPTS#--cacert }"
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. DISTRO DETECTION
 # ─────────────────────────────────────────────────────────────────────────────
@@ -149,10 +197,8 @@ fetch_release() {
         attempt=$(( attempt + 1 ))
         step "  Attempt ${attempt}/3: ${url}"
 
-        # Use curl: -L follows redirects, -f fails on HTTP errors (4xx/5xx),
-        # --retry 2 handles transient TCP resets, -S shows error on failure.
-        # Do NOT pipe into grep — that swallows the exit code.
-        if curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 15 \
+        # shellcheck disable=SC2086
+        if curl -fsSL ${CURL_EXTRA_OPTS} --connect-timeout 15 \
                 --max-time 120 -o "${archive}" "${url}"; then
 
             # Sanity check: a valid gzip tarball is at least 1 MB
@@ -183,8 +229,12 @@ fetch_release() {
             break  # success
         else
             local curl_exit=$?
-            warn "  curl failed (exit ${curl_exit})"
             rm -f "${archive}"
+            # Exit 60 = SSL certificate verification failed — retrying won't help
+            if (( curl_exit == 60 )); then
+                die "SSL certificate verification failed downloading ${label}.\n\n  Your network uses SSL inspection with a self-signed / corporate CA.\n  Fix options — pick one:\n\n  1. Add your corporate CA to the system trust store (recommended):\n       sudo cp /path/to/corporate-ca.crt /usr/local/share/ca-certificates/\n       sudo update-ca-certificates\n       sudo bash install.sh\n\n  2. Point curl at your CA bundle directly:\n       sudo CURL_CA_BUNDLE=/path/to/corporate-ca.pem bash install.sh\n\n  3. Disable SSL verification (only on a trusted network):\n       sudo bash install.sh --insecure"
+            fi
+            warn "  curl failed (exit ${curl_exit})"
             if (( attempt >= 3 )); then
                 die "Failed to download ${label} after 3 attempts (curl exit ${curl_exit}).\n  URL: ${url}\n  Check DNS, firewall, and proxy settings."
             fi

@@ -302,9 +302,17 @@ install_grafana() {
 
     if [[ "$PKG_MANAGER" == "apt" ]]; then
         step "Adding Grafana APT repository..."
-        wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
-        echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" \
-            > /etc/apt/sources.list.d/grafana.list
+        # Official Grafana method (as of 2025): store the raw ASCII-armored key
+        # as .asc in /etc/apt/keyrings/ — APT handles the dearmor itself.
+        # This works on Ubuntu 22.04, 24.04, and 25.04.
+        mkdir -p /etc/apt/keyrings
+        # shellcheck disable=SC2086
+        curl -fsSL ${CURL_EXTRA_OPTS} https://apt.grafana.com/gpg-full.key \
+            -o /etc/apt/keyrings/grafana.asc
+        chmod 644 /etc/apt/keyrings/grafana.asc
+
+        echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main" \
+            | tee /etc/apt/sources.list.d/grafana.list > /dev/null
         apt-get update -qq
         apt-get install -y -qq grafana
     else

@@ -9,117 +9,142 @@
 :root{
   --bg:#fff;--bg2:#f5f5f3;--bg3:#eeecea;
   --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
-  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.2);
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.18);
   --radius:8px;--radius-lg:12px;
-  --font:'Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Fira Mono',Consolas,monospace;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --mono:'Cascadia Code','Fira Mono',Consolas,monospace;
   --ok:#3B6D11;--warn:#854F0B;--danger:#A32D2D;
   --ok-bg:#EAF3DE;--warn-bg:#FAEEDA;--danger-bg:#FCEBEB;
   --blue:#378ADD;--blue-bg:#E6F1FB;--accent:#2E75B6;
+  --shadow:0 1px 4px rgba(0,0,0,.08);
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
   --text:#f0ede8;--text2:#b4b2a9;--text3:#888780;
-  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.18);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
   --ok:#97C459;--warn:#FAC775;--danger:#F09595;
   --ok-bg:#17340a;--warn-bg:#412402;--danger-bg:#501313;--blue-bg:#042C53;
+  --shadow:0 1px 4px rgba(0,0,0,.3);
 }}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--font);background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
 
 /* ── Topbar ── */
-.topbar{background:var(--bg);border-bottom:.5px solid var(--border);display:flex;align-items:stretch;position:sticky;top:0;z-index:100;padding:0 1rem;overflow-x:auto;}
+.topbar{background:var(--bg);border-bottom:.5px solid var(--border);display:flex;align-items:stretch;position:sticky;top:0;z-index:200;padding:0 1rem;}
 .brand{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:7px;padding-right:1rem;margin-right:.75rem;border-right:.5px solid var(--border);flex-shrink:0;}
-.brand-dot{width:8px;height:8px;border-radius:50%;background:#639922;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.nav-tab{font-size:13px;color:var(--text2);padding:0 .875rem;cursor:pointer;border-bottom:2px solid transparent;line-height:50px;transition:color .15s;white-space:nowrap;flex-shrink:0;}
-.nav-tab:hover{color:var(--text);}
-.nav-tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
-.nav-tab.site-tab{display:none;}
-.nav-tab.site-tab.visible{display:block;}
-.alert-pill{background:#E24B4A;color:#fff;font-size:10px;font-weight:600;padding:1px 5px;border-radius:10px;margin-left:5px;}
-.api-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-left:auto;padding-left:1rem;flex-shrink:0;}
-.api-dot{width:6px;height:6px;border-radius:50%;background:#639922;}
-.api-dot.offline{background:#E24B4A;}
-.api-dot.checking{background:#BA7517;animation:pulse 1s infinite;}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:#639922;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.nav-tabs{display:flex;align-items:stretch;overflow-x:auto;flex:1;}
+.tab{font-size:13px;color:var(--text2);padding:0 .875rem;cursor:pointer;border-bottom:2px solid transparent;line-height:50px;transition:color .15s;white-space:nowrap;flex-shrink:0;user-select:none;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:500;}
+.apill{background:#E24B4A;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:4px;min-width:16px;text-align:center;display:inline-block;}
+
+.topbar-right{display:flex;align-items:center;gap:12px;padding-left:1rem;flex-shrink:0;margin-left:auto;}
+.tf-btns{display:flex;gap:2px;background:var(--bg2);border-radius:6px;padding:3px;}
+.tf-btn{padding:3px 10px;font-size:11px;font-weight:500;cursor:pointer;border-radius:4px;color:var(--text3);border:none;background:none;font-family:var(--font);transition:all .15s;}
+.tf-btn.active{background:var(--bg);color:var(--text);box-shadow:var(--shadow);}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;background:var(--bg2);color:var(--text2);border:.5px solid var(--border2);transition:all .15s;font-family:var(--font);}
+.refresh-btn:hover{color:var(--text);background:var(--bg3);}
+.refresh-btn.spinning svg{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prom-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+.pdot{width:6px;height:6px;border-radius:50%;background:#639922;flex-shrink:0;}
+.pdot.err{background:#E24B4A;}
+.pdot.warn{background:#BA7517;animation:blink 1s infinite;}
 
 /* ── Layout ── */
-.app{max-width:1300px;margin:0 auto;padding:0 1rem 2rem;}
-.page{display:none;padding-top:1.25rem;}
+.app{max-width:1400px;margin:0 auto;padding:0 1rem 2rem;}
+.page{display:none;padding-top:1.125rem;}
 .page.active{display:block;}
 .sl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.75rem;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
-.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem;}
-.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.25rem;}
-@media(max-width:900px){.two-col,.three-col,.metric-grid{grid-template-columns:1fr 1fr;}}
-@media(max-width:560px){.two-col,.three-col,.metric-grid{grid-template-columns:1fr;}}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.125rem;}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.125rem;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.g4,.g3,.g2{grid-template-columns:1fr;}}
 
-/* ── Cards ── */
-.mc{background:var(--bg2);border-radius:var(--radius);padding:.875rem 1rem;}
+/* ── Metric cards ── */
+.mc{background:var(--bg2);border-radius:var(--radius);padding:.875rem 1rem;position:relative;}
+.mc.loading::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(128,128,128,.08),transparent);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius);}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .ml{font-size:11px;color:var(--text2);margin-bottom:5px;}
-.mv{font-size:22px;font-weight:500;line-height:1;}
+.mv{font-size:22px;font-weight:500;line-height:1.1;}
 .ms{font-size:11px;color:var(--text3);margin-top:4px;}
-.cc{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;}
-.ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.75rem;}
+.mv.ok{color:var(--ok);}.mv.warn{color:var(--warn);}.mv.danger{color:var(--danger);}
+
+/* ── Chart cards ── */
+.cc{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:var(--shadow);}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;}
 .ct{font-size:13px;font-weight:500;}
 .cm{font-size:11px;color:var(--text3);}
-.legend{display:flex;gap:14px;margin-bottom:7px;font-size:11px;color:var(--text2);flex-wrap:wrap;}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--text2);flex-wrap:wrap;margin-bottom:6px;}
 .ld{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle;}
 
-/* ── Colours ── */
-.ok{color:var(--ok);}.warn{color:var(--warn);}.danger{color:var(--danger);}
+/* ── Status badges ── */
 .badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px;}
 .b-up{background:var(--ok-bg);color:var(--ok);}
 .b-down{background:var(--danger-bg);color:var(--danger);}
-.b-static{background:var(--bg2);color:var(--text2);}
-.b-ospf{background:#E1F5EE;color:#0F6E56;}
-.b-bgp{background:#EEEDFE;color:#3C3489;}
-@media(prefers-color-scheme:dark){.b-ospf{background:#04342C;color:#5DCAA5;}.b-bgp{background:#26215C;color:#AFA9EC;}}
+.b-warn{background:var(--warn-bg);color:var(--warn);}
+.b-neutral{background:var(--bg2);color:var(--text2);}
+.b-blue{background:var(--blue-bg);color:var(--blue);}
 
 /* ── Tables ── */
-table.data{width:100%;border-collapse:collapse;font-size:12px;}
-table.data th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:6px 10px;border-bottom:.5px solid var(--border);}
-table.data td{padding:7px 10px;border-bottom:.5px solid var(--border);vertical-align:middle;}
-table.data tr:last-child td{border-bottom:none;}
-.util-wrap{width:72px;height:5px;background:var(--bg2);border-radius:3px;display:inline-block;vertical-align:middle;margin-right:5px;}
-.util-bar{height:5px;border-radius:3px;}
+.tw{overflow-x:auto;}
+table.t{width:100%;border-collapse:collapse;font-size:12px;}
+table.t th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:6px 10px;border-bottom:.5px solid var(--border);}
+table.t td{padding:7px 10px;border-bottom:.5px solid var(--border);vertical-align:middle;}
+table.t tr:last-child td{border-bottom:none;}
+table.t tr:hover td{background:var(--bg2);}
+table.t td.mono{font-family:var(--mono);font-size:11px;}
+.ubar-wrap{width:70px;height:5px;background:var(--bg3);border-radius:3px;display:inline-block;vertical-align:middle;margin-right:5px;}
+.ubar{height:5px;border-radius:3px;}
 .u-ok{background:#639922;}.u-warn{background:#BA7517;}.u-danger{background:#E24B4A;}
 
 /* ── Alert items ── */
-.al{display:flex;flex-direction:column;gap:7px;}
-.ai{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-radius:var(--radius);font-size:12px;line-height:1.5;}
+.alist{display:flex;flex-direction:column;gap:7px;}
+.aitem{display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-radius:var(--radius);font-size:12px;line-height:1.5;}
 .a-crit{background:var(--danger-bg);color:var(--danger);}
 .a-warn{background:var(--warn-bg);color:var(--warn);}
-.ad{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
-.d-crit{background:#E24B4A;}.d-warn{background:#BA7517;}
-.at{font-size:10px;opacity:.6;margin-top:2px;}
+.a-ok{background:var(--ok-bg);color:var(--ok);}
+.adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.d-crit{background:#E24B4A;}.d-warn{background:#BA7517;}.d-ok{background:#639922;}
+.atime{font-size:10px;opacity:.6;margin-top:2px;}
 
 /* ── Site overview cards ── */
-.site-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.125rem;cursor:pointer;transition:border-color .15s;}
-.site-card:hover{border-color:var(--border2);}
-.site-card.has-crit{border-left:3px solid #E24B4A;}
-.site-card.has-warn{border-left:3px solid #BA7517;}
-.site-name{font-size:14px;font-weight:500;margin-bottom:2px;}
-.site-dev{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:10px;}
-.site-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.scard{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.125rem;cursor:pointer;transition:box-shadow .15s,border-color .15s;box-shadow:var(--shadow);}
+.scard:hover{border-color:var(--border2);box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.scard.crit{border-left:3px solid #E24B4A;}
+.scard.warn{border-left:3px solid #BA7517;}
+.scard-name{font-size:14px;font-weight:500;margin-bottom:2px;}
+.scard-sub{font-size:11px;color:var(--text3);margin-bottom:10px;}
+.scard-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ss{font-size:11px;color:var(--text2);}
-.ss span{display:block;font-size:16px;font-weight:500;color:var(--text);margin-top:2px;}
+.ss span{display:block;font-size:16px;font-weight:500;color:var(--text);margin-top:1px;}
 
-/* ════════════════════════ ADMIN ════════════════════════ */
+/* ── Device selector (per-site page) ── */
+.dev-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.dev-btn{padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;background:var(--bg2);color:var(--text2);border:.5px solid var(--border);transition:all .15s;font-family:var(--font);}
+.dev-btn:hover{border-color:var(--border2);color:var(--text);}
+.dev-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.dev-btn.err{border-color:#E24B4A;color:var(--danger);}
+
+/* ── Error notice ── */
+.err-notice{background:var(--danger-bg);color:var(--danger);padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:1rem;}
+.info-notice{background:var(--blue-bg);color:var(--blue);padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:1rem;}
+
+/* ════════════════ ADMIN ════════════════ */
 .admin-layout{display:grid;grid-template-columns:210px 1fr;gap:1.5rem;margin-top:.25rem;}
 @media(max-width:700px){.admin-layout{grid-template-columns:1fr;}}
-.admin-sidebar{display:flex;flex-direction:column;gap:2px;}
+.asidebar{display:flex;flex-direction:column;gap:2px;}
 .anav{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:background .12s,color .12s;font-family:var(--font);}
 .anav:hover{background:var(--bg2);color:var(--text);}
 .anav.active{background:var(--bg2);color:var(--text);font-weight:500;}
-.anav svg{flex-shrink:0;opacity:.6;}
-.anav.active svg{opacity:1;}
-.admin-panel{display:none;}
-.admin-panel.active{display:block;}
-.acard{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.anav svg{flex-shrink:0;opacity:.6;}.anav.active svg{opacity:1;}
+.apanel{display:none;}.apanel.active{display:block;}
+.acard{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:var(--shadow);}
 .acard-title{font-size:14px;font-weight:600;margin-bottom:3px;}
 .acard-desc{font-size:12px;color:var(--text3);margin-bottom:1.125rem;line-height:1.6;}
-
-/* Form */
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
 .fr.thirds{grid-template-columns:1fr 1fr 1fr;}
 .fr.single{grid-template-columns:1fr;}
@@ -137,8 +162,6 @@ table.data tr:last-child td{border-bottom:none;}
 .toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
 .toggle:checked::after{left:18px;}
 .tlbl{font-size:13px;}
-
-/* Threshold sliders */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:540px){.tgrid{grid-template-columns:1fr;}}
 .tc{background:var(--bg2);border-radius:var(--radius);padding:11px 13px;}
@@ -149,8 +172,6 @@ table.data tr:last-child td{border-bottom:none;}
 .tslider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);}
 .tslider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);}
 .trange{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;}
-
-/* Editable tables */
 .dt-wrap{overflow-x:auto;}
 table.dt{width:100%;border-collapse:collapse;font-size:13px;}
 table.dt th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:6px 8px;border-bottom:.5px solid var(--border);}
@@ -159,53 +180,53 @@ table.dt tr:last-child td{border-bottom:none;}
 .tdi{width:100%;padding:5px 8px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text);border:.5px solid transparent;border-radius:5px;outline:none;transition:border-color .15s;}
 .tdi:focus{border-color:var(--accent);background:var(--bg);}
 .tdi.mono{font-family:var(--mono);}
-
-/* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;font-size:13px;font-weight:500;font-family:var(--font);border-radius:var(--radius);cursor:pointer;border:none;transition:opacity .15s;white-space:nowrap;}
-.btn:hover{opacity:.82;}
-.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn:hover{opacity:.82;}.btn:disabled{opacity:.4;cursor:not-allowed;}
 .btn-primary{background:var(--accent);color:#fff;}
 .btn-secondary{background:var(--bg2);color:var(--text);border:.5px solid var(--border2);}
-.btn-danger{background:#E24B4A;color:#fff;}
 .btn-sm{padding:5px 9px;font-size:12px;}
 .btn-icon{padding:5px;background:none;border:none;cursor:pointer;color:var(--text3);border-radius:5px;display:inline-flex;align-items:center;}
 .btn-icon:hover{background:var(--danger-bg);color:var(--danger);}
 .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:.875rem;}
-
-/* Feedback */
 .fb{display:none;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius);font-size:12px;margin-top:.75rem;}
 .fb.show{display:flex;}
 .fb.ok{background:var(--ok-bg);color:var(--ok);}
 .fb.err{background:var(--danger-bg);color:var(--danger);}
 .fb.loading{background:var(--blue-bg);color:var(--blue);}
-
-/* SNMP version tabs */
 .vtabs{display:flex;background:var(--bg2);border-radius:var(--radius);padding:3px;width:fit-content;margin-bottom:1rem;}
 .vtab{padding:5px 14px;font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;color:var(--text3);border:none;background:none;font-family:var(--font);transition:all .15s;}
-.vtab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
-.snmp-block{display:none;}
-.snmp-block.on{display:block;}
-
-/* Reload banner */
+.vtab.active{background:var(--bg);color:var(--text);box-shadow:var(--shadow);}
+.snmp-block{display:none;}.snmp-block.on{display:block;}
 .reload-banner{display:none;align-items:center;justify-content:space-between;padding:10px 15px;background:var(--warn-bg);border:.5px solid var(--warn);border-radius:var(--radius);margin-bottom:1rem;font-size:13px;color:var(--warn);}
 .reload-banner.show{display:flex;}
-
-/* Fallback indicator */
-.fallback-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--warn-bg);color:var(--warn);font-weight:500;}
+.sidebar-div{height:.5px;background:var(--border);margin:8px 0;}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="brand"><div class="brand-dot"></div>NetWatch</div>
-  <div class="nav-tab active"  onclick="showPage('overview',this)">Overview</div>
-  <!-- Dynamic site tabs injected here by JS -->
-  <div id="siteTabs"></div>
-  <div class="nav-tab"         onclick="showPage('alerts',this)">Alerts <span class="alert-pill" id="alertCount">0</span></div>
-  <div class="nav-tab"         onclick="showPage('admin',this)">⚙ Admin</div>
-  <div class="api-status">
-    <div class="api-dot checking" id="apiDot"></div>
-    <span id="apiLabel">connecting…</span>
+  <div class="nav-tabs" id="navTabs">
+    <div class="tab active" data-page="overview">Overview</div>
+    <!-- site tabs injected dynamically -->
+    <div class="tab" data-page="alerts">Alerts <span class="apill" id="alertCount">0</span></div>
+    <div class="tab" data-page="admin">⚙ Admin</div>
+  </div>
+  <div class="topbar-right">
+    <div class="tf-btns" id="tfBtns">
+      <button class="tf-btn" data-tf="1h">1h</button>
+      <button class="tf-btn active" data-tf="6h">6h</button>
+      <button class="tf-btn" data-tf="24h">24h</button>
+      <button class="tf-btn" data-tf="7d">7d</button>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="refresh()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+    <div class="prom-status">
+      <div class="pdot warn" id="promDot"></div>
+      <span id="promLabel">connecting…</span>
+    </div>
   </div>
 </div>
 
@@ -214,108 +235,82 @@ table.dt tr:last-child td{border-bottom:none;}
 <!-- ════ OVERVIEW ═══════════════════════════════════════════════════════════ -->
 <div class="page active" id="page-overview">
   <div class="sl">Fleet summary</div>
-  <div class="metric-grid" id="fleetMetrics">
-    <div class="mc"><div class="ml">Sites</div><div class="mv" id="fm-sites">—</div></div>
-    <div class="mc"><div class="ml">Devices</div><div class="mv" id="fm-devices">—</div></div>
-    <div class="mc"><div class="ml">Active alerts</div><div class="mv danger" id="fm-alerts">—</div></div>
-    <div class="mc"><div class="ml">SNMP profiles</div><div class="mv" id="fm-profiles">—</div></div>
+  <div class="g4" id="fleetMetrics">
+    <div class="mc loading"><div class="ml">Sites</div><div class="mv" id="fm-sites">—</div></div>
+    <div class="mc loading"><div class="ml">Devices monitored</div><div class="mv" id="fm-devices">—</div></div>
+    <div class="mc loading"><div class="ml">Active alerts</div><div class="mv" id="fm-alerts">—</div></div>
+    <div class="mc loading"><div class="ml">Devices reachable</div><div class="mv" id="fm-up">—</div></div>
   </div>
-  <div class="sl">Sites at a glance</div>
-  <div id="siteCards" class="three-col">
-    <div class="mc" style="grid-column:span 3;text-align:center;padding:2rem;color:var(--text3)">
-      No sites configured yet — go to ⚙ Admin → Sites to add your first site.
-    </div>
-  </div>
-  <div class="cc">
-    <div class="ch"><span class="ct">Fleet bandwidth — 1h (Mbps)</span></div>
-    <div class="legend"><span><span class="ld" style="background:#378ADD"></span>In</span><span><span class="ld" style="background:#639922"></span>Out</span></div>
-    <div style="position:relative;height:200px"><canvas id="fleetBwChart"></canvas></div>
+  <div class="sl">Sites</div>
+  <div class="g3" id="siteCards">
+    <div class="info-notice" style="grid-column:1/-1">No sites configured — go to ⚙ Admin → Sites to get started.</div>
   </div>
 </div>
 
-<!-- ════ DYNAMIC SITE PAGES ═════════════════════════════════════════════════ -->
-<div id="sitePages"></div>
+<!-- ════ DYNAMIC SITE + DEVICE PAGES ════════════════════════════════════════ -->
+<div id="dynamicPages"></div>
 
 <!-- ════ ALERTS ═════════════════════════════════════════════════════════════ -->
 <div class="page" id="page-alerts">
-  <div class="sl">Alert center — all sites</div>
-  <div class="metric-grid">
-    <div class="mc"><div class="ml">Critical</div><div class="mv danger">0</div></div>
-    <div class="mc"><div class="ml">Warning</div><div class="mv warn">0</div></div>
-    <div class="mc"><div class="ml">Resolved today</div><div class="mv">0</div></div>
-    <div class="mc"><div class="ml">Avg resolution</div><div class="mv">—</div></div>
+  <div class="sl">Active alerts</div>
+  <div class="g4">
+    <div class="mc"><div class="ml">Critical</div><div class="mv danger" id="ac-crit">0</div></div>
+    <div class="mc"><div class="ml">Warning</div><div class="mv warn" id="ac-warn">0</div></div>
+    <div class="mc"><div class="ml">Pending</div><div class="mv" id="ac-pend">0</div></div>
+    <div class="mc"><div class="ml">Total firing</div><div class="mv" id="ac-total">0</div></div>
   </div>
-  <div class="cc"><div class="ch"><span class="ct">Active alerts</span></div>
-    <div class="al">
-      <div class="ai a-warn"><div class="ad d-warn"></div><div>No alerts — configure devices and SNMP to begin monitoring.</div></div>
+  <div class="cc">
+    <div class="ch"><span class="ct">Firing alerts</span><span class="cm" id="alertsLastUpdated"></span></div>
+    <div class="alist" id="alertList">
+      <div class="aitem a-ok"><div class="adot d-ok"></div><div>Loading…</div></div>
     </div>
+  </div>
+  <div class="cc" style="margin-top:.5rem">
+    <div class="ch"><span class="ct">Scrape target health</span></div>
+    <div class="tw"><table class="t" id="targetsTable">
+      <thead><tr><th>Job</th><th>Instance</th><th>State</th><th>Last scraped</th><th>Error</th></tr></thead>
+      <tbody id="targetsBody"><tr><td colspan="5" style="color:var(--text3)">Loading…</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- ════ ADMIN ═══════════════════════════════════════════════════════════════ -->
+<!-- ════ ADMIN ════════════════════════════════════════════════════════════════ -->
 <div class="page" id="page-admin">
   <div id="reloadBanner" class="reload-banner">
-    <span>⚠ Unsaved changes — save then click <strong>Reload Services</strong> to apply.</span>
+    <span>⚠ Unsaved changes — save settings then click <strong>Reload Services</strong> to apply.</span>
     <button class="btn btn-secondary btn-sm" onclick="doReload()">Reload now</button>
   </div>
-
   <div class="admin-layout">
-    <div class="admin-sidebar">
+    <div class="asidebar">
       <button class="anav active" onclick="showAdmin('sites',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/></svg>
-        Sites
-      </button>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/></svg>Sites</button>
       <button class="anav" onclick="showAdmin('devices',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        Devices
-      </button>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Devices</button>
       <button class="anav" onclick="showAdmin('snmp',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        SNMP profiles
-      </button>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SNMP profiles</button>
       <button class="anav" onclick="showAdmin('thresholds',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Alert thresholds
-      </button>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Thresholds</button>
       <button class="anav" onclick="showAdmin('email',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Email / SMTP
-      </button>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email / SMTP</button>
       <button class="anav" onclick="showAdmin('polling',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Polling &amp; retention
-      </button>
-      <div style="height:.5px;background:var(--border);margin:8px 0"></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Polling &amp; retention</button>
+      <div class="sidebar-div"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doReload()" id="reloadBtn">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        Reload services
-      </button>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Reload services</button>
       <div id="reloadFb" class="fb"></div>
     </div>
-
     <div style="min-width:0">
 
       <!-- SITES -->
-      <div class="admin-panel active" id="ap-sites">
+      <div class="apanel active" id="ap-sites">
         <div class="acard">
           <div class="acard-title">Sites</div>
-          <div class="acard-desc">Sites group your devices and control alert routing. Each site can have its own warning and critical email recipients — leave blank to use the global defaults from Email / SMTP.</div>
-          <div class="dt-wrap">
-            <table class="dt" id="siteTable">
-              <thead><tr>
-                <th style="width:160px">Site name</th>
-                <th style="width:220px">Warnings email</th>
-                <th style="width:220px">Critical email</th>
-                <th style="width:36px"></th>
-              </tr></thead>
-              <tbody id="siteRows"></tbody>
-            </table>
-          </div>
+          <div class="acard-desc">Sites group devices and control alert routing. Each site can have its own email recipients — leave blank to use the global defaults from Email / SMTP.</div>
+          <div class="dt-wrap"><table class="dt"><thead><tr><th style="width:180px">Site name</th><th>Warnings email</th><th>Critical email</th><th style="width:34px"></th></tr></thead>
+          <tbody id="siteRows"></tbody></table></div>
           <div class="btn-row">
             <button class="btn btn-secondary" onclick="addSiteRow()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add site
-            </button>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add site</button>
             <button class="btn btn-primary" onclick="saveSites()">Save sites</button>
             <div id="siteFb" class="fb"></div>
           </div>
@@ -323,50 +318,32 @@ table.dt tr:last-child td{border-bottom:none;}
       </div>
 
       <!-- DEVICES -->
-      <div class="admin-panel" id="ap-devices">
+      <div class="apanel" id="ap-devices">
         <div class="acard">
           <div class="acard-title">Monitored devices</div>
-          <div class="acard-desc">One row per Cisco device. Assign a primary SNMP profile and optionally a fallback profile — if the primary times out, the fallback is tried automatically. Click Test to verify connectivity from the monitoring host.</div>
-          <div class="dt-wrap">
-            <table class="dt" id="deviceTable">
-              <thead><tr>
-                <th style="width:136px">IP address</th>
-                <th style="width:130px">Site</th>
-                <th style="width:130px">Hostname</th>
-                <th style="width:120px">Primary SNMP</th>
-                <th style="width:120px">Fallback SNMP</th>
-                <th style="width:72px">Test</th>
-                <th style="width:34px"></th>
-              </tr></thead>
-              <tbody id="deviceRows"></tbody>
-            </table>
-          </div>
+          <div class="acard-desc">One row per Cisco device. Assign a primary SNMP profile and optional fallback. If the primary (v3) times out the fallback (v2c) is tried automatically. Click Test to verify SNMP reachability from the monitoring host.</div>
+          <div class="dt-wrap"><table class="dt" id="deviceTable">
+            <thead><tr><th style="width:130px">IP</th><th style="width:130px">Site</th><th style="width:130px">Hostname</th><th style="width:120px">Primary SNMP</th><th style="width:120px">Fallback</th><th style="width:68px">Test</th><th style="width:32px"></th></tr></thead>
+            <tbody id="deviceRows"></tbody>
+          </table></div>
           <div class="btn-row">
             <button class="btn btn-secondary" onclick="addDeviceRow()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add device
-            </button>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add device</button>
             <button class="btn btn-primary" onclick="saveDevices()">Save devices</button>
             <div id="deviceFb" class="fb"></div>
           </div>
         </div>
       </div>
 
-      <!-- SNMP PROFILES -->
-      <div class="admin-panel" id="ap-snmp">
+      <!-- SNMP -->
+      <div class="apanel" id="ap-snmp">
         <div class="acard">
           <div class="acard-title">SNMP profiles</div>
-          <div class="acard-desc">Define named credential sets. Assign profiles to devices in the Devices tab. If a device has a v3 profile as primary and a v2c profile as fallback, v3 is tried first and v2c is used automatically if v3 times out.</div>
+          <div class="acard-desc">Named credential sets assigned per device. Add both a v3 and v2c profile to enable automatic fallback.</div>
           <div id="snmpProfileList"></div>
           <div class="btn-row">
-            <button class="btn btn-secondary" onclick="addSnmpProfile('2')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add v2c profile
-            </button>
-            <button class="btn btn-secondary" onclick="addSnmpProfile('3')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add v3 profile
-            </button>
+            <button class="btn btn-secondary" onclick="addSnmpProfile('2')">+ v2c profile</button>
+            <button class="btn btn-secondary" onclick="addSnmpProfile('3')">+ v3 profile</button>
             <button class="btn btn-primary" onclick="saveSnmpProfiles()">Save profiles</button>
             <div id="snmpFb" class="fb"></div>
           </div>
@@ -382,615 +359,838 @@ snmp-server community &lt;community&gt; ro ACL_SNMP_NETWATCH
 
 ! v3
 snmp-server group NETWATCH_GROUP v3 priv
-snmp-server user &lt;username&gt; NETWATCH_GROUP v3 auth sha &lt;auth-pass&gt; priv aes 128 &lt;priv-pass&gt;
+snmp-server user &lt;user&gt; NETWATCH_GROUP v3 auth sha &lt;auth-pass&gt; priv aes 128 &lt;priv-pass&gt;
 
 snmp-server enable traps snmp linkdown linkup
-snmp-server enable traps eigrp
-snmp-server host &lt;monitoring-host-ip&gt; version 2c &lt;community&gt;</pre>
+snmp-server enable traps eigrp</pre>
         </div>
       </div>
 
       <!-- THRESHOLDS -->
-      <div class="admin-panel" id="ap-thresholds">
+      <div class="apanel" id="ap-thresholds">
         <div class="acard">
           <div class="acard-title">Alert thresholds</div>
-          <div class="acard-desc">Applied globally across all devices. Changes update cisco_alerts.yml and take effect after Reload.</div>
+          <div class="acard-desc">Applied globally across all devices. Changes take effect after Reload.</div>
           <div class="tgrid">
-            <div class="tc"><div class="th2"><span class="tn">CPU — warning</span><span class="tv warn" id="cpuWarnLbl">70%</span></div>
-              <input type="range" class="tslider" id="cpuWarn" min="10" max="95" value="70" oninput="ts('cpuWarn','cpuWarnLbl','%')">
-              <div class="trange"><span>10%</span><span>95%</span></div></div>
-            <div class="tc"><div class="th2"><span class="tn">CPU — critical</span><span class="tv danger" id="cpuCritLbl">90%</span></div>
-              <input type="range" class="tslider" id="cpuCrit" min="10" max="99" value="90" oninput="ts('cpuCrit','cpuCritLbl','%')">
-              <div class="trange"><span>10%</span><span>99%</span></div></div>
-            <div class="tc"><div class="th2"><span class="tn">Memory — warning</span><span class="tv warn" id="memWarnLbl">80%</span></div>
-              <input type="range" class="tslider" id="memWarn" min="10" max="99" value="80" oninput="ts('memWarn','memWarnLbl','%')">
-              <div class="trange"><span>10%</span><span>99%</span></div></div>
-            <div class="tc"><div class="th2"><span class="tn">Interface utilization</span><span class="tv warn" id="utilWarnLbl">85%</span></div>
-              <input type="range" class="tslider" id="utilWarn" min="10" max="99" value="85" oninput="ts('utilWarn','utilWarnLbl','%')">
-              <div class="trange"><span>10%</span><span>99%</span></div></div>
-            <div class="tc"><div class="th2"><span class="tn">Input errors (per sec)</span><span class="tv" id="errRateLbl">5</span></div>
-              <input type="range" class="tslider" id="errRate" min="1" max="100" value="5" oninput="ts('errRate','errRateLbl','')">
-              <div class="trange"><span>1</span><span>100</span></div></div>
-            <div class="tc"><div class="th2"><span class="tn">Drop rate (pps)</span><span class="tv" id="dropRateLbl">10</span></div>
-              <input type="range" class="tslider" id="dropRate" min="1" max="1000" value="10" oninput="ts('dropRate','dropRateLbl','')">
-              <div class="trange"><span>1</span><span>1000</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">CPU — warning</span><span class="tv warn" id="cpuWarnLbl">70%</span></div><input type="range" class="tslider" id="cpuWarn" min="10" max="95" value="70" oninput="ts('cpuWarn','cpuWarnLbl','%')"><div class="trange"><span>10%</span><span>95%</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">CPU — critical</span><span class="tv danger" id="cpuCritLbl">90%</span></div><input type="range" class="tslider" id="cpuCrit" min="10" max="99" value="90" oninput="ts('cpuCrit','cpuCritLbl','%')"><div class="trange"><span>10%</span><span>99%</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">Memory — warning</span><span class="tv warn" id="memWarnLbl">80%</span></div><input type="range" class="tslider" id="memWarn" min="10" max="99" value="80" oninput="ts('memWarn','memWarnLbl','%')"><div class="trange"><span>10%</span><span>99%</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">Interface utilization</span><span class="tv warn" id="utilWarnLbl">85%</span></div><input type="range" class="tslider" id="utilWarn" min="10" max="99" value="85" oninput="ts('utilWarn','utilWarnLbl','%')"><div class="trange"><span>10%</span><span>99%</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">Input errors / sec</span><span class="tv" id="errRateLbl">5</span></div><input type="range" class="tslider" id="errRate" min="1" max="100" value="5" oninput="ts('errRate','errRateLbl','')"><div class="trange"><span>1</span><span>100</span></div></div>
+            <div class="tc"><div class="th2"><span class="tn">Drop rate (pps)</span><span class="tv" id="dropRateLbl">10</span></div><input type="range" class="tslider" id="dropRate" min="1" max="1000" value="10" oninput="ts('dropRate','dropRateLbl','')"><div class="trange"><span>1</span><span>1000</span></div></div>
           </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="saveThresholds()">Save thresholds</button>
-            <div id="threshFb" class="fb"></div>
-          </div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="saveThresholds()">Save thresholds</button><div id="threshFb" class="fb"></div></div>
         </div>
       </div>
 
       <!-- EMAIL -->
-      <div class="admin-panel" id="ap-email">
+      <div class="apanel" id="ap-email">
         <div class="acard">
           <div class="acard-title">Email / SMTP</div>
-          <div class="acard-desc">Global SMTP settings and default recipients. Individual sites can override the recipients in the Sites tab. Critical alerts (interface down, tunnel down, EIGRP lost, default route gone) always go to the critical address.</div>
-          <div class="fr">
-            <div class="ff"><label class="fl">SMTP host <span class="req">*</span></label><input class="fi mono" id="smtpHost" type="text" placeholder="smtp.office365.com"></div>
-            <div class="ff"><label class="fl">Port</label><input class="fi mono" id="smtpPort" type="number" value="587" min="1" max="65535"></div>
-          </div>
-          <div class="fr">
-            <div class="ff"><label class="fl">From address <span class="req">*</span></label><input class="fi" id="smtpFrom" type="email" placeholder="netwatch@company.com"></div>
-            <div class="ff"><label class="fl">SMTP username</label><input class="fi" id="smtpUser" type="text" placeholder="netwatch@company.com"></div>
-          </div>
-          <div class="fr">
-            <div class="ff"><label class="fl">SMTP password</label><input class="fi mono" id="smtpPass" type="password" placeholder="••••••••"></div>
-            <div class="ff"><label class="fl">TLS</label><div class="ftog"><input type="checkbox" class="toggle" id="smtpTls" checked><label class="tlbl" for="smtpTls">Require STARTTLS</label></div></div>
-          </div>
-          <div class="fr">
-            <div class="ff"><label class="fl">Default warnings recipient <span class="req">*</span></label><input class="fi" id="emailWarn" type="email" placeholder="alerts@company.com"><span class="fh">High CPU, memory, util, errors — all sites unless overridden</span></div>
-            <div class="ff"><label class="fl">Default critical recipient <span class="req">*</span></label><input class="fi" id="emailCrit" type="email" placeholder="noc@company.com"><span class="fh">Interface/tunnel down, EIGRP lost, default route gone</span></div>
-          </div>
-          <div class="fr single">
-            <div class="ff"><label class="fl">Grafana URL <span style="font-weight:400;color:var(--text3)">(linked in critical emails)</span></label><input class="fi mono" id="grafanaUrl" type="text" placeholder="http://10.100.0.50:3000"></div>
-          </div>
+          <div class="acard-desc">Global SMTP settings. Per-site recipients can be set in the Sites panel.</div>
+          <div class="fr"><div class="ff"><label class="fl">SMTP host <span class="req">*</span></label><input class="fi mono" id="smtpHost" type="text" placeholder="smtp.office365.com"></div><div class="ff"><label class="fl">Port</label><input class="fi mono" id="smtpPort" type="number" value="587"></div></div>
+          <div class="fr"><div class="ff"><label class="fl">From address <span class="req">*</span></label><input class="fi" id="smtpFrom" type="email" placeholder="netwatch@company.com"></div><div class="ff"><label class="fl">SMTP username</label><input class="fi" id="smtpUser" type="text"></div></div>
+          <div class="fr"><div class="ff"><label class="fl">SMTP password</label><input class="fi mono" id="smtpPass" type="password" placeholder="••••••••"></div><div class="ff"><label class="fl">TLS</label><div class="ftog"><input type="checkbox" class="toggle" id="smtpTls" checked><label class="tlbl" for="smtpTls">Require STARTTLS</label></div></div></div>
+          <div class="fr"><div class="ff"><label class="fl">Default warnings recipient</label><input class="fi" id="emailWarn" type="email"><span class="fh">All sites unless overridden</span></div><div class="ff"><label class="fl">Default critical recipient</label><input class="fi" id="emailCrit" type="email"></div></div>
           <div class="btn-row">
-            <button class="btn btn-primary" onclick="saveEmail()">Save email settings</button>
-            <button class="btn btn-secondary" onclick="testEmail()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
-              Send test email
-            </button>
+            <button class="btn btn-primary" onclick="saveEmail()">Save email</button>
+            <button class="btn btn-secondary" onclick="testEmail()">Send test email</button>
             <div id="emailFb" class="fb"></div>
           </div>
         </div>
       </div>
 
       <!-- POLLING -->
-      <div class="admin-panel" id="ap-polling">
+      <div class="apanel" id="ap-polling">
         <div class="acard">
           <div class="acard-title">Polling intervals</div>
-          <div class="acard-desc">How often each SNMP module is scraped. Use <code style="font-family:var(--mono);font-size:11px">30s</code>, <code style="font-family:var(--mono);font-size:11px">2m</code>, <code style="font-family:var(--mono);font-size:11px">1h</code> format. Lower intervals give finer granularity but increase SNMP load on devices.</div>
-          <div class="fr">
-            <div class="ff"><label class="fl">Interfaces (bandwidth, errors)</label><input class="fi mono" id="ifaceInterval" value="60s" placeholder="60s"><span class="fh">Default: 60s</span></div>
-            <div class="ff"><label class="fl">Resources (CPU, memory)</label><input class="fi mono" id="resInterval" value="60s" placeholder="60s"><span class="fh">Default: 60s</span></div>
-          </div>
-          <div class="fr">
-            <div class="ff"><label class="fl">Tunnels</label><input class="fi mono" id="tunInterval" value="30s" placeholder="30s"><span class="fh">Default: 30s — faster for tunnel state detection</span></div>
-            <div class="ff"><label class="fl">EIGRP neighbors</label><input class="fi mono" id="eigrpInterval" value="60s" placeholder="60s"><span class="fh">Default: 60s</span></div>
-          </div>
-          <div class="fr">
-            <div class="ff"><label class="fl">Routing table</label><input class="fi mono" id="routeInterval" value="120s" placeholder="120s"><span class="fh">Default: 120s — route tables change infrequently</span></div>
-            <div class="ff"><label class="fl">Global scrape interval</label><input class="fi mono" id="globalScrape" value="60s" placeholder="60s"><span class="fh">Prometheus default — individual modules override this</span></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="savePolling()">Save polling settings</button>
-            <div id="pollingFb" class="fb"></div>
-          </div>
+          <div class="acard-desc">Format: <code style="font-family:var(--mono);font-size:11px">30s</code> <code style="font-family:var(--mono);font-size:11px">2m</code> <code style="font-family:var(--mono);font-size:11px">1h</code></div>
+          <div class="fr"><div class="ff"><label class="fl">Interfaces (bandwidth, errors)</label><input class="fi mono" id="ifaceInterval" value="60s"></div><div class="ff"><label class="fl">Resources (CPU, memory)</label><input class="fi mono" id="resInterval" value="60s"></div></div>
+          <div class="fr"><div class="ff"><label class="fl">Tunnels</label><input class="fi mono" id="tunInterval" value="30s"></div><div class="ff"><label class="fl">EIGRP neighbors</label><input class="fi mono" id="eigrpInterval" value="60s"></div></div>
+          <div class="fr"><div class="ff"><label class="fl">Routing table</label><input class="fi mono" id="routeInterval" value="120s"></div><div class="ff"><label class="fl">Global scrape interval</label><input class="fi mono" id="globalScrape" value="60s"></div></div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="savePolling()">Save polling</button><div id="pollingFb" class="fb"></div></div>
         </div>
         <div class="acard">
           <div class="acard-title">Metrics retention</div>
-          <div class="acard-desc">How long Prometheus keeps data on disk. Use <code style="font-family:var(--mono);font-size:11px">90d</code>, <code style="font-family:var(--mono);font-size:11px">12w</code>, <code style="font-family:var(--mono);font-size:11px">1y</code> format. Changing this requires restarting the Prometheus systemd unit — the Reload button handles this automatically.</div>
-          <div class="fr single">
-            <div class="ff"><label class="fl">Retention period</label><input class="fi mono" id="retention" value="90d" placeholder="90d"><span class="fh">~2 GB per device per year at 60s intervals</span></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="savePolling()">Save retention</button>
-            <div id="retentionFb" class="fb"></div>
-          </div>
-        </div>
-        <div class="acard">
-          <div class="acard-title">Grafana datasource</div>
-          <div class="acard-desc">If you move Prometheus to a different host or port, update it here. This updates the Grafana provisioning datasource file.</div>
-          <div class="fr single">
-            <div class="ff"><label class="fl">Prometheus URL</label><input class="fi mono" id="promUrl" value="http://localhost:9090" placeholder="http://localhost:9090"></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="saveGrafanaDs()">Save datasource</button>
-            <div id="gfDsFb" class="fb"></div>
-          </div>
+          <div class="acard-desc">Format: <code style="font-family:var(--mono);font-size:11px">90d</code> <code style="font-family:var(--mono);font-size:11px">12w</code> <code style="font-family:var(--mono);font-size:11px">1y</code> — changing this restarts Prometheus.</div>
+          <div class="fr single"><div class="ff"><label class="fl">Retention period</label><input class="fi mono" id="retention" value="90d"><span class="fh">~2 GB per device per year at 60s intervals</span></div></div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="savePolling()">Save retention</button><div id="retentionFb" class="fb"></div></div>
         </div>
       </div>
 
-    </div><!-- /panels -->
-  </div><!-- /admin-layout -->
-</div><!-- /page-admin -->
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <script>
-/* ═══════════════════════════════ STATE ═════════════════════════════════════ */
-let _state  = { devices:[], snmp_profiles:[], sites:[], thresholds:{}, email:{}, polling:{} };
-let _online = false;
-let _dirty  = false;
+/* ═══════════════════════════ CONFIG ════════════════════════════════════════ */
+const API_BASE  = `http://${location.hostname}:9199`;
+const PROM_DIRECT = `http://${location.hostname}:9090`;
 
-const API = `http://${location.hostname}:9199`;
+let _state    = { devices:[], snmp_profiles:[], sites:[], thresholds:{}, email:{}, polling:{} };
+let _tf       = '6h';   // timeframe
+let _online   = false;
+let _promMode = 'unknown'; // 'direct' | 'proxy' | 'down'
+let _dirty    = false;
+let _charts   = {};     // chart instances keyed by canvas id
 
-/* ═══════════════════════════════ NAV ═══════════════════════════════════════ */
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  const pg = document.getElementById('page-' + id);
-  if (pg) pg.classList.add('active');
-  if (el) el.classList.add('active');
-  if (id === 'admin') loadConfig();
+/* ═══════════════════════════ PROMETHEUS LAYER ══════════════════════════════ */
+function tfSeconds() {
+  const map = {'1h':3600,'6h':21600,'24h':86400,'7d':604800};
+  return map[_tf] || 21600;
 }
 
-function showAdmin(id, btn) {
-  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.anav').forEach(b => b.classList.remove('active'));
-  document.getElementById('ap-' + id)?.classList.add('active');
-  btn.classList.add('active');
+function step() {
+  // Reasonable step for ~200 data points
+  return Math.max(15, Math.floor(tfSeconds() / 200));
 }
 
-/* ═══════════════════════════════ API ═══════════════════════════════════════ */
-async function api(path, opts = {}) {
-  const r = await fetch(API + path, {headers:{'Content-Type':'application/json'}, ...opts});
+async function promQuery(query) {
+  // Try direct first, fall back to proxy
+  const params = new URLSearchParams({ query, time: Date.now()/1000 });
+  if (_promMode !== 'proxy') {
+    try {
+      const r = await fetch(`${PROM_DIRECT}/api/v1/query?${params}`, {signal: AbortSignal.timeout(6000)});
+      if (r.ok) {
+        _promMode = 'direct';
+        updatePromStatus('direct');
+        return (await r.json()).data?.result || [];
+      }
+    } catch {}
+  }
+  // Proxy
+  try {
+    const r = await fetch(`${API_BASE}/api/prometheus/query?${params}`, {signal: AbortSignal.timeout(8000)});
+    if (r.ok) {
+      _promMode = 'proxy';
+      updatePromStatus('proxy');
+      return (await r.json()).data?.result || [];
+    }
+  } catch {}
+  _promMode = 'down';
+  updatePromStatus('down');
+  return [];
+}
+
+async function promRange(query) {
+  const end   = Math.floor(Date.now() / 1000);
+  const start = end - tfSeconds();
+  const params = new URLSearchParams({ query, start, end, step: step() });
+
+  if (_promMode !== 'proxy') {
+    try {
+      const r = await fetch(`${PROM_DIRECT}/api/v1/query_range?${params}`, {signal: AbortSignal.timeout(10000)});
+      if (r.ok) {
+        _promMode = 'direct';
+        updatePromStatus('direct');
+        return (await r.json()).data?.result || [];
+      }
+    } catch {}
+  }
+  try {
+    const r = await fetch(`${API_BASE}/api/prometheus/query_range?${params}`, {signal: AbortSignal.timeout(12000)});
+    if (r.ok) {
+      _promMode = 'proxy';
+      updatePromStatus('proxy');
+      return (await r.json()).data?.result || [];
+    }
+  } catch {}
+  _promMode = 'down';
+  updatePromStatus('down');
+  return [];
+}
+
+async function promAlerts() {
+  const url = _promMode === 'proxy'
+    ? `${API_BASE}/api/prometheus/alerts`
+    : `${PROM_DIRECT}/api/v1/alerts`;
+  try {
+    const r = await fetch(url, {signal: AbortSignal.timeout(5000)});
+    if (r.ok) return (await r.json()).data?.alerts || [];
+  } catch {}
+  // try other
+  try {
+    const alt = _promMode === 'proxy'
+      ? `${PROM_DIRECT}/api/v1/alerts`
+      : `${API_BASE}/api/prometheus/alerts`;
+    const r = await fetch(alt, {signal: AbortSignal.timeout(5000)});
+    if (r.ok) return (await r.json()).data?.alerts || [];
+  } catch {}
+  return [];
+}
+
+async function promTargets() {
+  const url = _promMode === 'proxy'
+    ? `${API_BASE}/api/prometheus/targets`
+    : `${PROM_DIRECT}/api/v1/targets`;
+  try {
+    const r = await fetch(url, {signal: AbortSignal.timeout(5000)});
+    if (r.ok) {
+      const d = await r.json();
+      return [...(d.data?.activeTargets||[]), ...(d.data?.droppedTargets||[])];
+    }
+  } catch {}
+  return [];
+}
+
+function updatePromStatus(mode) {
+  const dot = document.getElementById('promDot');
+  const lbl = document.getElementById('promLabel');
+  if (mode === 'direct') { dot.className='pdot'; lbl.textContent='Prometheus direct'; }
+  else if (mode === 'proxy') { dot.className='pdot warn'; lbl.textContent='Prometheus via proxy'; }
+  else { dot.className='pdot err'; lbl.textContent='Prometheus unreachable'; }
+}
+
+/* ═══════════════════════════ API HELPERS ═══════════════════════════════════ */
+async function api(path, opts={}) {
+  const r = await fetch(API_BASE + path, {headers:{'Content-Type':'application/json'}, ...opts});
   return r.json();
 }
-
 function fb(id, msg, type) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg;
-  el.className = `fb show ${type}`;
+  el.textContent = msg; el.className = `fb show ${type}`;
   if (type !== 'loading') setTimeout(() => el.classList.remove('show'), 5000);
 }
+function setDirty() { _dirty=true; document.getElementById('reloadBanner').classList.add('show'); }
 
-function setDirty() {
-  _dirty = true;
-  document.getElementById('reloadBanner').classList.add('show');
+/* ═══════════════════════════ CHARTS ════════════════════════════════════════ */
+const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+const gc   = dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
+const tc   = '#888780';
+
+const BASE_OPTS = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{mode:'index',intersect:false,
+    callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)??'—'}`}}},
+  elements:{point:{radius:0,hoverRadius:3},line:{tension:.35,borderWidth:1.5}},
+  scales:{
+    x:{grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:8}},
+    y:{grid:{color:gc},ticks:{color:tc,font:{size:10}}}
+  }
+};
+
+function makeChart(canvasId, datasets, yOpts={}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  if (_charts[canvasId]) { _charts[canvasId].destroy(); }
+  const opts = JSON.parse(JSON.stringify(BASE_OPTS));
+  Object.assign(opts.scales.y, yOpts);
+  const c = new Chart(canvas, {type:'line', data:{labels:[], datasets}, options:opts});
+  _charts[canvasId] = c;
+  return c;
 }
 
-async function pingApi() {
-  const dot = document.getElementById('apiDot');
-  const lbl = document.getElementById('apiLabel');
+function updateChart(canvasId, result, labelFn, valueFn) {
+  const chart = _charts[canvasId];
+  if (!chart || !result.length) return;
+  const series = result[0];
+  if (!series?.values) return;
+  const labels = series.values.map(v => {
+    const d = new Date(v[0]*1000);
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+  });
+  chart.data.labels = labels;
+  result.forEach((s,i) => {
+    if (chart.data.datasets[i]) {
+      chart.data.datasets[i].data = s.values.map(v => parseFloat(v[1]));
+      if (labelFn) chart.data.datasets[i].label = labelFn(s.metric);
+    }
+  });
+  chart.update('none');
+}
+
+/* ═══════════════════════════ NAV ═══════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll(`[data-page="${id}"]`).forEach(t => t.classList.add('active'));
+  if (id === 'admin') loadAdminConfig();
+  if (id === 'alerts') refreshAlerts();
+  if (id.startsWith('site-')) refreshSitePage(id.replace('site-',''));
+}
+
+function showAdmin(id, btn) {
+  document.querySelectorAll('.apanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.anav').forEach(b => b.classList.remove('active'));
+  document.getElementById('ap-'+id)?.classList.add('active');
+  btn.classList.add('active');
+}
+
+// Wire nav tabs
+document.getElementById('navTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (tab && tab.dataset.page) showPage(tab.dataset.page);
+});
+
+// Timeframe buttons
+document.getElementById('tfBtns').addEventListener('click', e => {
+  const btn = e.target.closest('.tf-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _tf = btn.dataset.tf;
+});
+
+/* ═══════════════════════════ REFRESH ═══════════════════════════════════════ */
+async function refresh() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
   try {
-    await api('/api/status');
-    _online = true;
-    dot.className = 'api-dot';
-    lbl.textContent = 'API connected';
-  } catch {
-    _online = false;
-    dot.className = 'api-dot offline';
-    lbl.textContent = 'API offline — view only';
+    const activePage = document.querySelector('.page.active')?.id?.replace('page-','');
+    if (!activePage) return;
+    if (activePage === 'overview')       await refreshOverview();
+    else if (activePage === 'alerts')    await refreshAlerts();
+    else if (activePage.startsWith('site-')) await refreshSitePage(activePage.replace('site-',''));
+    else if (activePage.startsWith('device-')) {
+      const [,siteId, devIp] = activePage.split('--');
+      await refreshDevicePage(siteId, decodeURIComponent(devIp));
+    }
+  } finally {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
   }
 }
 
-/* ═══════════════════════════════ LOAD CONFIG ═══════════════════════════════ */
-async function loadConfig() {
-  if (!_online) return;
-  try {
-    const c = await api('/api/config');
-    _state = c;
-    renderSiteTabs(c.sites || []);
-    renderSiteCards(c.sites || [], c.devices || []);
-    renderFleetMetrics(c);
-    fillSiteTable(c.sites || []);
-    fillDeviceTable(c.devices || [], c.snmp_profiles || [], c.sites || []);
-    fillSnmpProfiles(c.snmp_profiles || []);
-    fillThresholds(c.thresholds || {});
-    fillEmail(c.email || {});
-    fillPolling(c.polling || {});
-  } catch(e) { console.warn('loadConfig:', e); }
+/* ═══════════════════════════ OVERVIEW ══════════════════════════════════════ */
+async function refreshOverview() {
+  // Fleet metrics
+  document.querySelectorAll('#fleetMetrics .mc').forEach(c => c.classList.add('loading'));
+  const sites   = _state.sites   || [];
+  const devices = _state.devices || [];
+
+  document.getElementById('fm-sites').textContent   = sites.length;
+  document.getElementById('fm-devices').textContent = devices.length;
+  document.querySelectorAll('#fleetMetrics .mc').forEach(c => c.classList.remove('loading'));
+
+  // Active alerts count
+  const alerts = await promAlerts();
+  const firing = alerts.filter(a => a.state === 'firing');
+  document.getElementById('fm-alerts').textContent = firing.length;
+  document.getElementById('fm-alerts').className   = `mv ${firing.length>0?'danger':'ok'}`;
+  document.getElementById('alertCount').textContent = firing.length;
+
+  // Devices up (via SNMP Exporter scrape success)
+  const upResult = await promQuery('up{job="cisco_interfaces"}');
+  const upCount  = upResult.filter(r => r.value[1]==='1').length;
+  document.getElementById('fm-up').textContent = devices.length
+    ? `${upCount}/${devices.length}`
+    : '—';
+  document.getElementById('fm-up').className = `mv ${upCount<devices.length?'warn':'ok'}`;
+
+  // Site cards — add per-site alert counts
+  renderSiteCards(sites, devices, firing);
 }
 
-/* ═══════════════════════════════ OVERVIEW ══════════════════════════════════ */
-function renderFleetMetrics(c) {
-  document.getElementById('fm-sites').textContent    = (c.sites||[]).length;
-  document.getElementById('fm-devices').textContent  = (c.devices||[]).length;
-  document.getElementById('fm-alerts').textContent   = '0';
-  document.getElementById('fm-profiles').textContent = (c.snmp_profiles||[]).length;
-  document.getElementById('alertCount').textContent  = '0';
-}
-
-function renderSiteTabs(sites) {
-  const container = document.getElementById('siteTabs');
-  container.innerHTML = '';
-  sites.forEach(s => {
-    const tab = document.createElement('div');
-    tab.className = 'nav-tab site-tab visible';
-    tab.textContent = s.name;
-    tab.onclick = () => {
-      showPage('site-' + s.id, null);
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-    };
-    container.appendChild(tab);
-  });
-  renderSitePages(sites);
-}
-
-function renderSiteCards(sites, devices) {
+function renderSiteCards(sites, devices, alerts=[]) {
   const container = document.getElementById('siteCards');
   if (!sites.length) {
-    container.innerHTML = '<div class="mc" style="grid-column:span 3;text-align:center;padding:2rem;color:var(--text3)">No sites configured — go to ⚙ Admin → Sites.</div>';
+    container.innerHTML = '<div class="info-notice" style="grid-column:1/-1">No sites configured — go to ⚙ Admin → Sites to get started.</div>';
     return;
   }
   container.innerHTML = '';
   sites.forEach(s => {
-    const devs = devices.filter(d => d.site === s.name);
+    const devs     = devices.filter(d => d.site === s.name);
+    const sAlerts  = alerts.filter(a => a.labels?.site === s.name);
+    const hasCrit  = sAlerts.some(a => a.labels?.severity === 'critical');
+    const hasWarn  = sAlerts.some(a => a.labels?.severity === 'warning');
     const card = document.createElement('div');
-    card.className = 'site-card';
-    card.onclick   = () => {
-      showPage('site-' + s.id, null);
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    };
+    card.className = `scard${hasCrit?' crit':hasWarn?' warn':''}`;
     card.innerHTML = `
-      <div class="site-name">${s.name}</div>
-      <div class="site-dev">${devs.length} device${devs.length!==1?'s':''} — ${devs.map(d=>d.ip).join(', ')||'none assigned'}</div>
-      <div class="site-stats">
+      <div class="scard-name">${s.name}</div>
+      <div class="scard-sub">${devs.length} device${devs.length!==1?'s':''}</div>
+      <div class="scard-stats">
         <div class="ss">Devices<span>${devs.length}</span></div>
-        <div class="ss">Alerts<span class="ok">0</span></div>
-        <div class="ss">Warnings email<span style="font-size:11px;font-family:var(--mono)">${s.email_warnings||'default'}</span></div>
-        <div class="ss">Critical email<span style="font-size:11px;font-family:var(--mono)">${s.email_critical||'default'}</span></div>
+        <div class="ss">Alerts<span class="${hasCrit?'danger':hasWarn?'warn':'ok'}">${sAlerts.length}</span></div>
+        <div class="ss">Warnings<span style="font-size:11px;font-family:var(--mono)">${s.email_warnings||'default'}</span></div>
+        <div class="ss">Critical<span style="font-size:11px;font-family:var(--mono)">${s.email_critical||'default'}</span></div>
       </div>`;
+    card.onclick = () => showPage('site-' + s.id);
     container.appendChild(card);
   });
 }
 
-function renderSitePages(sites) {
-  const container = document.getElementById('sitePages');
+/* ═══════════════════════════ DYNAMIC PAGES ═════════════════════════════════ */
+function buildDynamicPages(sites, devices) {
+  const container  = document.getElementById('dynamicPages');
+  const navTabs    = document.getElementById('navTabs');
+
+  // Remove old site tabs
+  navTabs.querySelectorAll('.site-tab').forEach(t => t.remove());
+
+  // Remove old dynamic pages
   container.innerHTML = '';
+
+  const alertsTab = navTabs.querySelector('[data-page="alerts"]');
+
   sites.forEach(s => {
+    // Nav tab
+    const tab = document.createElement('div');
+    tab.className = 'tab site-tab';
+    tab.dataset.page = 'site-' + s.id;
+    tab.textContent = s.name;
+    navTabs.insertBefore(tab, alertsTab);
+
+    // Site page
+    const siteDevs = devices.filter(d => d.site === s.name);
     const pg = document.createElement('div');
     pg.className = 'page';
     pg.id = 'page-site-' + s.id;
+
     pg.innerHTML = `
-      <div class="sl">${s.name}</div>
-      <div class="metric-grid">
-        <div class="mc"><div class="ml">Avg CPU</div><div class="mv">—</div><div class="ms">live data via Grafana</div></div>
-        <div class="mc"><div class="ml">Avg memory</div><div class="mv">—</div></div>
-        <div class="mc"><div class="ml">Active alerts</div><div class="mv ok">0</div></div>
-        <div class="mc"><div class="ml">Warnings email</div><div class="mv" style="font-size:13px;font-family:var(--mono)">${s.email_warnings||'<span style="color:var(--text3)">default</span>'}</div></div>
+      <div class="sl">${s.name} — site overview</div>
+      <div class="g4" id="site-metrics-${s.id}">
+        <div class="mc loading"><div class="ml">Devices</div><div class="mv">${siteDevs.length}</div></div>
+        <div class="mc loading"><div class="ml">Avg CPU</div><div class="mv" id="s-cpu-${s.id}">—</div></div>
+        <div class="mc loading"><div class="ml">Avg memory</div><div class="mv" id="s-mem-${s.id}">—</div></div>
+        <div class="mc loading"><div class="ml">Active alerts</div><div class="mv" id="s-alerts-${s.id}">—</div></div>
       </div>
-      <div class="cc"><div class="ch"><span class="ct">Devices assigned to ${s.name}</span></div>
-        <table class="data" id="siteDevTable-${s.id}">
-          <thead><tr><th>IP</th><th>Hostname</th><th>Primary SNMP</th><th>Fallback</th></tr></thead>
-          <tbody id="siteDevBody-${s.id}"></tbody>
-        </table>
-      </div>`;
+      <div class="sl">Devices — click to drill down</div>
+      <div class="dev-selector" id="devsel-${s.id}">
+        ${siteDevs.length ? '' : '<span style="color:var(--text3);font-size:12px">No devices assigned to this site</span>'}
+      </div>
+      <div id="site-devpages-${s.id}"></div>`;
+
     container.appendChild(pg);
-  });
-  // Fill device rows for each site page
-  if (_state.devices) {
-    sites.forEach(s => {
-      const tbody = document.getElementById('siteDevBody-' + s.id);
-      if (!tbody) return;
-      const devs = _state.devices.filter(d => d.site === s.name);
-      if (!devs.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text3);padding:1rem">No devices assigned to this site</td></tr>';
-        return;
-      }
-      devs.forEach(d => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td style="font-family:var(--mono)">${d.ip}</td><td>${d.hostname||'—'}</td><td><span class="badge b-info" style="background:var(--blue-bg);color:var(--blue)">${d.snmp_profile||'—'}</span></td><td>${d.snmp_fallback_profile?`<span class="fallback-badge">${d.snmp_fallback_profile}</span>`:'—'}</td>`;
-        tbody.appendChild(tr);
-      });
+
+    // Device buttons + sub-pages
+    siteDevs.forEach((dev, i) => {
+      const devBtn = document.createElement('button');
+      devBtn.className = 'dev-btn' + (i===0?' active':'');
+      devBtn.textContent = dev.hostname || dev.ip;
+      devBtn.dataset.ip  = dev.ip;
+      devBtn.onclick = () => {
+        pg.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+        devBtn.classList.add('active');
+        pg.querySelectorAll('.dev-page').forEach(p => p.classList.remove('active'));
+        const dp = document.getElementById(`devpage-${s.id}-${dev.ip.replace(/\./g,'_')}`);
+        if (dp) { dp.classList.add('active'); loadDevicePage(s.id, dev); }
+      };
+      pg.querySelector(`#devsel-${s.id}`).appendChild(devBtn);
+
+      // Device sub-page
+      const dp = buildDeviceSubPage(s.id, dev);
+      pg.querySelector(`#site-devpages-${s.id}`).appendChild(dp);
     });
+  });
+}
+
+function buildDeviceSubPage(siteId, dev) {
+  const ip  = dev.ip;
+  const sid = ip.replace(/\./g,'_');
+  const id  = `devpage-${siteId}-${sid}`;
+
+  const dp  = document.createElement('div');
+  dp.className = 'dev-page';
+  dp.id        = id;
+  if (siteId && _state.sites && _state.devices) {
+    const siteDevs = _state.devices.filter(d => d.site === _state.sites.find(s=>s.id===siteId)?.name);
+    if (siteDevs[0]?.ip === ip) dp.classList.add('active');
+  }
+
+  dp.innerHTML = `
+    <div class="g4" style="margin-top:.25rem">
+      <div class="mc loading"><div class="ml">CPU 5-min avg</div><div class="mv" id="d-cpu-${sid}">—</div><div class="ms" id="d-cpu-sub-${sid}"></div></div>
+      <div class="mc loading"><div class="ml">Memory used</div><div class="mv" id="d-mem-${sid}">—</div><div class="ms" id="d-mem-sub-${sid}"></div></div>
+      <div class="mc loading"><div class="ml">Uptime</div><div class="mv" id="d-up-${sid}">—</div></div>
+      <div class="mc loading"><div class="ml">Default route</div><div class="mv" id="d-route-${sid}" style="font-size:13px;font-family:var(--mono);line-height:1.4">—</div><div class="ms" id="d-route-sub-${sid}"></div></div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="ch"><span class="ct">Bandwidth — top interfaces (Mbps)</span></div>
+        <div class="legend"><span><span class="ld" style="background:#378ADD"></span>In</span><span><span class="ld" style="background:#639922"></span>Out</span></div>
+        <div style="position:relative;height:200px"><canvas id="bw-${sid}"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="ch"><span class="ct">CPU &amp; memory (%)</span></div>
+        <div class="legend"><span><span class="ld" style="background:#D4537E"></span>CPU</span><span><span class="ld" style="background:#1D9E75"></span>Mem</span></div>
+        <div style="position:relative;height:200px"><canvas id="res-${sid}"></canvas></div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="ch"><span class="ct">Interfaces</span></div>
+      <div class="tw"><table class="t"><thead><tr><th>Interface</th><th>Status</th><th>In (Mbps)</th><th>Out (Mbps)</th><th>Util</th><th>Errors/s</th><th>Drops/s</th></tr></thead>
+      <tbody id="iface-${sid}"><tr><td colspan="7" style="color:var(--text3)">Loading…</td></tr></tbody></table></div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="ch"><span class="ct">EIGRP neighbors</span></div>
+        <div class="tw"><table class="t"><thead><tr><th>Peer address</th><th>AS</th><th>Uptime</th><th>Retrans</th></tr></thead>
+        <tbody id="eigrp-${sid}"><tr><td colspan="4" style="color:var(--text3)">Loading…</td></tr></tbody></table></div>
+      </div>
+      <div class="cc">
+        <div class="ch"><span class="ct">Routing table (selected)</span></div>
+        <div class="tw"><table class="t"><thead><tr><th>Destination</th><th>Next hop</th><th>Protocol</th><th>Age (s)</th></tr></thead>
+        <tbody id="routes-${sid}"><tr><td colspan="4" style="color:var(--text3)">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="ch"><span class="ct">Interface errors &amp; drops</span></div>
+      <div class="legend"><span><span class="ld" style="background:#E24B4A"></span>In errors</span><span><span class="ld" style="background:#BA7517"></span>In drops</span><span><span class="ld" style="background:#8B5CF6"></span>Out drops</span></div>
+      <div style="position:relative;height:160px"><canvas id="errs-${sid}"></canvas></div>
+    </div>`;
+  return dp;
+}
+
+/* ═══════════════════════════ SITE PAGE DATA ════════════════════════════════ */
+async function refreshSitePage(siteId) {
+  const site    = _state.sites?.find(s => s.id === siteId);
+  if (!site) return;
+  const siteDevs = _state.devices?.filter(d => d.site === site.name) || [];
+
+  // Site-level avg CPU
+  const cpuRes = await promQuery(`avg(cpmCPUTotal5minRev{site="${site.name}"})`);
+  const cpuVal = parseFloat(cpuRes[0]?.value[1]);
+  const cpuEl  = document.getElementById(`s-cpu-${siteId}`);
+  if (cpuEl) {
+    cpuEl.textContent  = isNaN(cpuVal) ? '—' : `${Math.round(cpuVal)}%`;
+    cpuEl.className = `mv ${cpuVal>90?'danger':cpuVal>70?'warn':'ok'}`;
+    cpuEl.closest('.mc')?.classList.remove('loading');
+  }
+
+  // Site-level avg memory
+  const memRes = await promQuery(`avg(ciscoMemoryPoolUsed{site="${site.name}"} / (ciscoMemoryPoolUsed{site="${site.name}"} + ciscoMemoryPoolFree{site="${site.name}"}) * 100)`);
+  const memVal = parseFloat(memRes[0]?.value[1]);
+  const memEl  = document.getElementById(`s-mem-${siteId}`);
+  if (memEl) {
+    memEl.textContent = isNaN(memVal) ? '—' : `${Math.round(memVal)}%`;
+    memEl.className = `mv ${memVal>90?'danger':memVal>80?'warn':'ok'}`;
+    memEl.closest('.mc')?.classList.remove('loading');
+  }
+
+  // Alerts for this site
+  const alerts   = await promAlerts();
+  const sAlerts  = alerts.filter(a => a.labels?.site === site.name && a.state === 'firing');
+  const alertEl  = document.getElementById(`s-alerts-${siteId}`);
+  if (alertEl) {
+    alertEl.textContent = sAlerts.length;
+    alertEl.className = `mv ${sAlerts.length>0?'danger':'ok'}`;
+    alertEl.closest('.mc')?.classList.remove('loading');
+  }
+
+  // Load first device
+  if (siteDevs.length > 0) {
+    await loadDevicePage(siteId, siteDevs[0]);
   }
 }
 
-/* ═══════════════════════════════ SITES ═════════════════════════════════════ */
-function fillSiteTable(sites) {
-  document.getElementById('siteRows').innerHTML = '';
-  sites.forEach(s => addSiteRow(s));
-  if (!sites.length) addSiteRow();
+async function loadDevicePage(siteId, dev) {
+  const sid = dev.ip.replace(/\./g,'_');
+  const ip  = dev.ip;
+
+  // ── Scalar metrics ──────────────────────────────────────────────────────────
+  const [cpuR, memR, uptimeR, routeR] = await Promise.all([
+    promQuery(`cpmCPUTotal5minRev{instance="${ip}"}`),
+    promQuery(`ciscoMemoryPoolUsed{instance="${ip}"} / (ciscoMemoryPoolUsed{instance="${ip}"} + ciscoMemoryPoolFree{instance="${ip}"}) * 100`),
+    promQuery(`sysUpTime{instance="${ip}"}`),
+    promQuery(`ipCidrRouteNextHop{instance="${ip}",ipCidrRouteDest="0.0.0.0",ipCidrRoutePfxLen="0"}`),
+  ]);
+
+  const cpu  = parseFloat(cpuR[0]?.value[1]);
+  const mem  = parseFloat(memR[0]?.value[1]);
+  const uptimeTicks = parseFloat(uptimeR[0]?.value[1]);
+  const uptimeDays  = isNaN(uptimeTicks) ? null : Math.floor(uptimeTicks / 8640000);
+
+  const cpuEl = document.getElementById(`d-cpu-${sid}`);
+  if (cpuEl) {
+    cpuEl.textContent = isNaN(cpu) ? '—' : `${Math.round(cpu)}%`;
+    cpuEl.className = `mv ${cpu>90?'danger':cpu>70?'warn':''}`;
+    cpuEl.closest('.mc')?.classList.remove('loading');
+  }
+  const memEl = document.getElementById(`d-mem-${sid}`);
+  if (memEl) {
+    memEl.textContent = isNaN(mem) ? '—' : `${Math.round(mem)}%`;
+    memEl.className = `mv ${mem>90?'danger':mem>80?'warn':''}`;
+    memEl.closest('.mc')?.classList.remove('loading');
+  }
+  const upEl = document.getElementById(`d-up-${sid}`);
+  if (upEl) {
+    upEl.textContent = uptimeDays !== null ? `${uptimeDays}d` : '—';
+    upEl.closest('.mc')?.classList.remove('loading');
+  }
+  const routeEl = document.getElementById(`d-route-${sid}`);
+  if (routeEl) {
+    const nh = routeR[0]?.metric?.ipCidrRouteNextHop || routeR[0]?.value?.[1];
+    routeEl.innerHTML = nh ? `0.0.0.0/0<br>via ${nh}` : '<span style="color:var(--danger)">MISSING</span>';
+    routeEl.closest('.mc')?.classList.remove('loading');
+  }
+
+  // ── Charts ─────────────────────────────────────────────────────────────────
+  const [bwIn, bwOut, cpuRange, memRange, errIn, dropIn, dropOut] = await Promise.all([
+    promRange(`rate(ifHCInOctets{instance="${ip}",ifDescr!~"Vlan.*|Loopback.*"}[5m])*8/1e6`),
+    promRange(`rate(ifHCOutOctets{instance="${ip}",ifDescr!~"Vlan.*|Loopback.*"}[5m])*8/1e6`),
+    promRange(`cpmCPUTotal5minRev{instance="${ip}"}`),
+    promRange(`ciscoMemoryPoolUsed{instance="${ip}"} / (ciscoMemoryPoolUsed{instance="${ip}"} + ciscoMemoryPoolFree{instance="${ip}"}) * 100`),
+    promRange(`rate(ifInErrors{instance="${ip}"}[5m])`),
+    promRange(`rate(ifInDiscards{instance="${ip}"}[5m])`),
+    promRange(`rate(ifOutDiscards{instance="${ip}"}[5m])`),
+  ]);
+
+  // Bandwidth chart — top 3 interfaces by avg in traffic
+  const bwDs = [];
+  const colors = ['#378ADD','#639922','#D4537E','#E8A535','#8B5CF6'];
+  bwIn.slice(0,3).forEach((s,i) => {
+    const iface = s.metric?.ifDescr || `iface${i}`;
+    const match = bwOut.find(o => o.metric?.ifDescr === iface);
+    bwDs.push({label:`${iface} In`,  data:s.values?.map(v=>parseFloat(v[1]))||[],     borderColor:colors[i*2]||colors[0],fill:false});
+    if (match)
+      bwDs.push({label:`${iface} Out`,data:match.values?.map(v=>parseFloat(v[1]))||[],borderColor:colors[i*2+1]||colors[1],fill:false,borderDash:[4,3]});
+  });
+  const bwChart = makeChart(`bw-${sid}`, bwDs.length ? bwDs : [{label:'In',data:[],borderColor:'#378ADD',fill:false}]);
+  if (bwChart && bwIn.length) {
+    const labels = bwIn[0].values?.map(v=>{const d=new Date(v[0]*1000);return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;});
+    bwChart.data.labels = labels;
+    bwChart.data.datasets.forEach((ds, i) => {
+      const src = i%2===0 ? bwIn[Math.floor(i/2)] : bwOut.find(o=>o.metric?.ifDescr===bwIn[Math.floor(i/2)]?.metric?.ifDescr);
+      if (src) ds.data = src.values.map(v=>parseFloat(v[1]));
+    });
+    bwChart.update('none');
+  }
+
+  // CPU + Mem chart
+  const resChart = makeChart(`res-${sid}`, [
+    {label:'CPU', data:[], borderColor:'#D4537E', fill:false},
+    {label:'Mem', data:[], borderColor:'#1D9E75', fill:false},
+    {label:'CPU warn', data:[], borderColor:'rgba(226,75,74,.4)', borderDash:[5,4], fill:false, borderWidth:1},
+  ], {max:100, ticks:{callback:v=>v+'%',color:tc,font:{size:10}}});
+  if (resChart && cpuRange.length) {
+    const labels = cpuRange[0].values?.map(v=>{const d=new Date(v[0]*1000);return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;});
+    resChart.data.labels = labels;
+    resChart.data.datasets[0].data = cpuRange[0].values?.map(v=>parseFloat(v[1]))||[];
+    resChart.data.datasets[1].data = memRange[0]?.values?.map(v=>parseFloat(v[1]))||[];
+    const cpuWarn = _state.thresholds?.cpu_warn || 70;
+    resChart.data.datasets[2].data = Array(labels?.length||0).fill(cpuWarn);
+    resChart.update('none');
+  }
+
+  // Errors chart
+  const errDs = [
+    {label:'In errors', data:[], borderColor:'#E24B4A', fill:false},
+    {label:'In drops',  data:[], borderColor:'#BA7517', fill:false},
+    {label:'Out drops', data:[], borderColor:'#8B5CF6', fill:false},
+  ];
+  const errChart = makeChart(`errs-${sid}`, errDs);
+  if (errChart) {
+    const ref = errIn[0]||dropIn[0]||dropOut[0];
+    if (ref) {
+      const labels = ref.values?.map(v=>{const d=new Date(v[0]*1000);return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;});
+      errChart.data.labels = labels;
+      errChart.data.datasets[0].data = errIn[0]?.values?.map(v=>parseFloat(v[1]))||[];
+      errChart.data.datasets[1].data = dropIn[0]?.values?.map(v=>parseFloat(v[1]))||[];
+      errChart.data.datasets[2].data = dropOut[0]?.values?.map(v=>parseFloat(v[1]))||[];
+      errChart.update('none');
+    }
+  }
+
+  // ── Interface table ─────────────────────────────────────────────────────────
+  const [ifaceStatus, ifaceInRate, ifaceOutRate, ifaceErrIn, ifaceDropIn, ifaceDropOut, ifaceSpeed] = await Promise.all([
+    promQuery(`ifOperStatus{instance="${ip}"}`),
+    promQuery(`rate(ifHCInOctets{instance="${ip}"}[5m])*8/1e6`),
+    promQuery(`rate(ifHCOutOctets{instance="${ip}"}[5m])*8/1e6`),
+    promQuery(`rate(ifInErrors{instance="${ip}"}[5m])`),
+    promQuery(`rate(ifInDiscards{instance="${ip}"}[5m])`),
+    promQuery(`rate(ifOutDiscards{instance="${ip}"}[5m])`),
+    promQuery(`ifHighSpeed{instance="${ip}"}`),
+  ]);
+
+  const tbody = document.getElementById(`iface-${sid}`);
+  if (tbody && ifaceStatus.length) {
+    const rows = ifaceStatus
+      .filter(r => r.metric?.ifDescr)
+      .sort((a,b) => (a.metric.ifDescr||'').localeCompare(b.metric.ifDescr||''));
+    tbody.innerHTML = rows.map(r => {
+      const iface   = r.metric.ifDescr;
+      const alias   = r.metric.ifAlias ? ` <span style="color:var(--text3)">${r.metric.ifAlias}</span>` : '';
+      const up      = r.value[1] === '1';
+      const inR     = parseFloat(ifaceInRate.find(x=>x.metric.ifDescr===iface)?.value[1]||0).toFixed(1);
+      const outR    = parseFloat(ifaceOutRate.find(x=>x.metric.ifDescr===iface)?.value[1]||0).toFixed(1);
+      const spd     = parseFloat(ifaceSpeed.find(x=>x.metric.ifDescr===iface)?.value[1]||0);
+      const util    = spd > 0 ? Math.min(100, (parseFloat(inR)/spd*100)).toFixed(0) : '—';
+      const uClass  = util>85?'u-danger':util>70?'u-warn':'u-ok';
+      const errI    = parseFloat(ifaceErrIn.find(x=>x.metric.ifDescr===iface)?.value[1]||0).toFixed(2);
+      const drpI    = parseFloat(ifaceDropIn.find(x=>x.metric.ifDescr===iface)?.value[1]||0).toFixed(2);
+      const drpO    = parseFloat(ifaceDropOut.find(x=>x.metric.ifDescr===iface)?.value[1]||0).toFixed(2);
+      const errCls  = parseFloat(errI)>0 ? 'style="color:var(--danger)"' : '';
+      return `<tr>
+        <td class="mono">${iface}${alias}</td>
+        <td><span class="badge ${up?'b-up':'b-down'}">${up?'up':'down'}</span></td>
+        <td>${inR}</td><td>${outR}</td>
+        <td>${util!=='—'?`<div class="ubar-wrap"><div class="ubar ${uClass}" style="width:${util}%"></div></div>${util}%`:'—'}</td>
+        <td ${errCls}>${errI}</td>
+        <td ${parseFloat(drpI)+parseFloat(drpO)>0?'style="color:var(--warn)"':''}>${drpI}/${drpO}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="color:var(--text3)">No interface data</td></tr>';
+  }
+
+  // ── EIGRP table ─────────────────────────────────────────────────────────────
+  const eigrpRes = await promQuery(`cEigrpPeerUpTime{instance="${ip}"}`);
+  const eigrpTbody = document.getElementById(`eigrp-${sid}`);
+  if (eigrpTbody) {
+    eigrpTbody.innerHTML = eigrpRes.length
+      ? eigrpRes.map(r => `<tr>
+          <td class="mono">${r.metric.cEigrpPeerAddr||'—'}</td>
+          <td>${r.metric.cEigrpAsNumber||'—'}</td>
+          <td>${Math.floor(parseFloat(r.value[1])/100)}s</td>
+          <td>—</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" style="color:var(--text3)">No EIGRP neighbors or no data</td></tr>';
+  }
+
+  // ── Routing table ───────────────────────────────────────────────────────────
+  const routeRes = await promQuery(`ipCidrRouteType{instance="${ip}"}`);
+  const routeTbody = document.getElementById(`routes-${sid}`);
+  if (routeTbody) {
+    const protoMap = {1:'other',2:'reject',3:'local',4:'remote'};
+    routeTbody.innerHTML = routeRes.length
+      ? routeRes.slice(0,15).map(r => {
+          const dest = `${r.metric.ipCidrRouteDest||'?'}/${r.metric.ipCidrRoutePfxLen||'?'}`;
+          const nh   = routeR.find(x=>x.metric?.ipCidrRouteDest===r.metric.ipCidrRouteDest)?.metric?.ipCidrRouteNextHop || '—';
+          return `<tr>
+            <td class="mono">${dest}</td>
+            <td class="mono">${nh}</td>
+            <td>${protoMap[r.value[1]]||r.value[1]}</td>
+            <td>—</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="4" style="color:var(--text3)">No routing data</td></tr>';
+  }
 }
 
-function addSiteRow(s = {}) {
+/* ═══════════════════════════ ALERTS PAGE ═══════════════════════════════════ */
+async function refreshAlerts() {
+  const alerts  = await promAlerts();
+  const targets = await promTargets();
+
+  const firing  = alerts.filter(a => a.state==='firing');
+  const crits   = firing.filter(a => a.labels?.severity==='critical');
+  const warns   = firing.filter(a => a.labels?.severity==='warning');
+  const pend    = alerts.filter(a => a.state==='pending');
+
+  document.getElementById('ac-crit').textContent  = crits.length;
+  document.getElementById('ac-warn').textContent  = warns.length;
+  document.getElementById('ac-pend').textContent  = pend.length;
+  document.getElementById('ac-total').textContent = firing.length;
+  document.getElementById('alertCount').textContent = firing.length;
+  document.getElementById('alertsLastUpdated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+  const alist = document.getElementById('alertList');
+  if (!firing.length) {
+    alist.innerHTML = '<div class="aitem a-ok"><div class="adot d-ok"></div><div>No active alerts — all clear.</div></div>';
+  } else {
+    alist.innerHTML = firing.sort((a,b) => a.labels?.severity==='critical'?-1:1).map(a => {
+      const crit = a.labels?.severity === 'critical';
+      const age  = a.activeAt ? Math.floor((Date.now()-new Date(a.activeAt))/60000) : '?';
+      return `<div class="aitem ${crit?'a-crit':'a-warn'}">
+        <div class="adot ${crit?'d-crit':'d-warn'}"></div>
+        <div>
+          <div><strong>${a.labels?.alertname||'Alert'}</strong> — ${a.labels?.instance||''} [${a.labels?.site||''}]</div>
+          <div>${a.annotations?.description||a.annotations?.summary||''}</div>
+          <div class="atime">Firing for ${age} min</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Targets table
+  const tbody = document.getElementById('targetsBody');
+  if (targets.length) {
+    tbody.innerHTML = targets.map(t => {
+      const ok = t.health === 'up';
+      const scraped = t.lastScrape ? new Date(t.lastScrape).toLocaleTimeString() : '—';
+      return `<tr>
+        <td>${t.labels?.job||'—'}</td>
+        <td class="mono">${t.labels?.instance||t.discoveredLabels?.__address__||'—'}</td>
+        <td><span class="badge ${ok?'b-up':t.health==='down'?'b-down':'b-neutral'}">${t.health||'?'}</span></td>
+        <td>${scraped}</td>
+        <td style="color:var(--danger);font-size:11px">${t.lastError||''}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text3)">No target data — Prometheus may be unreachable</td></tr>';
+  }
+}
+
+/* ═══════════════════════════ ADMIN ════════════════════════════════════════ */
+async function loadAdminConfig() {
+  try {
+    const c = await api('/api/config');
+    _state  = c;
+    fillSiteTable(c.sites||[]);
+    fillDeviceTable(c.devices||[], c.snmp_profiles||[], c.sites||[]);
+    fillSnmpProfiles(c.snmp_profiles||[]);
+    fillThresholds(c.thresholds||{});
+    fillEmail(c.email||{});
+    fillPolling(c.polling||{});
+  } catch(e) { console.warn('loadAdminConfig:', e); }
+}
+
+// Sites
+function fillSiteTable(sites) { document.getElementById('siteRows').innerHTML=''; sites.forEach(s=>addSiteRow(s)); if(!sites.length)addSiteRow(); }
+function addSiteRow(s={}) {
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input class="tdi" data-f="name"            value="${s.name||''}"            placeholder="New York HQ"></td>
-    <td><input class="tdi" data-f="email_warnings"  value="${s.email_warnings||''}"  placeholder="alerts@company.com (or leave blank for default)"></td>
-    <td><input class="tdi" data-f="email_critical"  value="${s.email_critical||''}"  placeholder="noc@company.com (or leave blank for default)"></td>
-    <td><button class="btn-icon" onclick="this.closest('tr').remove()" title="Remove">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-    </button></td>`;
+  tr.innerHTML=`<td><input class="tdi" data-f="name" value="${s.name||''}" placeholder="New York HQ"></td><td><input class="tdi" data-f="email_warnings" value="${s.email_warnings||''}" placeholder="alerts@co.com"></td><td><input class="tdi" data-f="email_critical" value="${s.email_critical||''}" placeholder="noc@co.com"></td><td><button class="btn-icon" onclick="this.closest('tr').remove()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>`;
   document.getElementById('siteRows').appendChild(tr);
 }
-
-function getSites() {
-  return [...document.querySelectorAll('#siteRows tr')].map(tr => ({
-    name:           tr.querySelector('[data-f="name"]')?.value.trim()||'',
-    email_warnings: tr.querySelector('[data-f="email_warnings"]')?.value.trim()||'',
-    email_critical: tr.querySelector('[data-f="email_critical"]')?.value.trim()||'',
-  })).filter(s => s.name);
-}
-
+function getSites() { return [...document.querySelectorAll('#siteRows tr')].map(tr=>({name:tr.querySelector('[data-f="name"]')?.value.trim()||'',email_warnings:tr.querySelector('[data-f="email_warnings"]')?.value.trim()||'',email_critical:tr.querySelector('[data-f="email_critical"]')?.value.trim()||''})).filter(s=>s.name); }
 async function saveSites() {
   fb('siteFb','Saving…','loading');
+  try { const r=await api('/api/sites',{method:'POST',body:JSON.stringify({sites:getSites()})}); fb('siteFb',r.ok?`Saved ${r.count} site(s). Reload to apply.`:r.error,r.ok?'ok':'err'); if(r.ok){setDirty();loadAdminConfig();} }
+  catch{fb('siteFb','API unreachable','err');}
+}
+
+// Devices
+function profileOpts(sel,allowNone=false){const ps=_state.snmp_profiles||[];let o=allowNone?'<option value="">— none —</option>':'';ps.forEach(p=>{o+=`<option value="${p.name}"${p.name===sel?' selected':''}>${p.name} (v${p.version})</option>`;});return o;}
+function siteOpts(sel){const ss=_state.sites||[];let o='<option value="">— unassigned —</option>';ss.forEach(s=>{o+=`<option value="${s.name}"${s.name===sel?' selected':''}>${s.name}</option>`;});return o;}
+function fillDeviceTable(devs){document.getElementById('deviceRows').innerHTML='';devs.forEach(d=>addDeviceRow(d));if(!devs.length)addDeviceRow();}
+function addDeviceRow(d={}){const tr=document.createElement('tr');tr.innerHTML=`<td><input class="tdi mono" data-f="ip" value="${d.ip||''}" placeholder="10.0.0.1"></td><td><select class="tdi" data-f="site">${siteOpts(d.site||'')}</select></td><td><input class="tdi mono" data-f="hostname" value="${d.hostname||''}" placeholder="NYC-RTR-01"></td><td><select class="tdi" data-f="snmp_profile">${profileOpts(d.snmp_profile||'')}</select></td><td><select class="tdi" data-f="snmp_fallback_profile">${profileOpts(d.snmp_fallback_profile||'',true)}</select></td><td><button class="btn btn-secondary btn-sm" onclick="testSnmpRow(this)">Test</button></td><td><button class="btn-icon" onclick="this.closest('tr').remove()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>`;document.getElementById('deviceRows').appendChild(tr);}
+function getDevices(){return[...document.querySelectorAll('#deviceRows tr')].map(tr=>({ip:tr.querySelector('[data-f="ip"]')?.value.trim()||'',site:tr.querySelector('[data-f="site"]')?.value||'',hostname:tr.querySelector('[data-f="hostname"]')?.value.trim()||'',snmp_profile:tr.querySelector('[data-f="snmp_profile"]')?.value||'',snmp_fallback_profile:tr.querySelector('[data-f="snmp_fallback_profile"]')?.value||''})).filter(d=>d.ip);}
+async function saveDevices(){fb('deviceFb','Saving…','loading');try{const r=await api('/api/devices',{method:'POST',body:JSON.stringify({devices:getDevices()})});fb('deviceFb',r.ok?`Saved ${r.count} device(s).`:r.error,r.ok?'ok':'err');if(r.ok)setDirty();}catch{fb('deviceFb','API unreachable','err');}}
+async function testSnmpRow(btn){const tr=btn.closest('tr');const ip=tr.querySelector('[data-f="ip"]')?.value.trim();const profile=tr.querySelector('[data-f="snmp_profile"]')?.value||'';if(!ip){alert('Enter an IP first.');return;}btn.disabled=true;btn.textContent='…';try{const r=await api('/api/test-snmp',{method:'POST',body:JSON.stringify({ip,profile})});btn.textContent=r.ok?'✓ OK':'✗ Fail';btn.style.color=r.ok?'var(--ok)':'var(--danger)';btn.title=r.ok?r.message:r.error;setTimeout(()=>{btn.textContent='Test';btn.style.color='';btn.disabled=false;},5000);}catch{btn.textContent='✗';setTimeout(()=>{btn.textContent='Test';btn.disabled=false;},3000);}}
+
+// SNMP profiles
+function fillSnmpProfiles(profiles){const c=document.getElementById('snmpProfileList');c.innerHTML='';profiles.forEach((p,i)=>renderProfileCard(p,i));if(!profiles.length){addSnmpProfile('2');addSnmpProfile('3');}}
+function renderProfileCard(p,idx){const c=document.getElementById('snmpProfileList');const card=document.createElement('div');card.className='acard';const isV3=p.version==='3';card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="display:flex;align-items:center;gap:10px"><span class="badge ${isV3?'b-blue':'b-neutral'}">v${p.version}</span><input class="fi mono" style="width:200px" data-pf="name" value="${p.name}" placeholder="Profile name"></div><button class="btn-icon" onclick="this.closest('.acard').remove()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div><input type="hidden" data-pf="version" value="${p.version}">${isV3?`<div class="fr"><div class="ff"><label class="fl">Username <span class="req">*</span></label><input class="fi mono" data-pf="v3_username" value="${p.v3_username||''}" placeholder="netwatch"></div><div></div></div><div class="fr thirds"><div class="ff"><label class="fl">Auth protocol</label><select class="fs" data-pf="v3_auth_protocol"><option ${(p.v3_auth_protocol||'SHA')==='SHA'?'selected':''}>SHA</option><option ${p.v3_auth_protocol==='SHA256'?'selected':''}>SHA256</option><option ${p.v3_auth_protocol==='MD5'?'selected':''}>MD5</option></select></div><div class="ff" style="grid-column:span 2"><label class="fl">Auth password <span class="req">*</span></label><input class="fi mono" type="password" data-pf="v3_auth_password" value="${p.v3_auth_password||''}" placeholder="••••••••"></div></div><div class="fr thirds"><div class="ff"><label class="fl">Priv protocol</label><select class="fs" data-pf="v3_priv_protocol"><option ${(p.v3_priv_protocol||'AES')==='AES'?'selected':''}>AES</option><option ${p.v3_priv_protocol==='AES256'?'selected':''}>AES256</option><option ${p.v3_priv_protocol==='DES'?'selected':''}>DES</option></select></div><div class="ff" style="grid-column:span 2"><label class="fl">Priv password <span class="req">*</span></label><input class="fi mono" type="password" data-pf="v3_priv_password" value="${p.v3_priv_password||''}" placeholder="••••••••"></div></div>`:`<div class="fr single"><div class="ff"><label class="fl">Community string <span class="req">*</span></label><input class="fi mono" data-pf="community" value="${p.community||''}" placeholder="public"><span class="fh">Set on Cisco: snmp-server community &lt;string&gt; ro ACL_SNMP_NETWATCH</span></div></div>`}`;c.appendChild(card);}
+function addSnmpProfile(version){const idx=document.querySelectorAll('#snmpProfileList .acard').length;renderProfileCard({name:version==='3'?'default-v3':'default-v2c',version,community:'',v3_username:'',v3_auth_protocol:'SHA',v3_auth_password:'',v3_priv_protocol:'AES',v3_priv_password:''},idx);}
+function getSnmpProfiles(){return[...document.querySelectorAll('#snmpProfileList .acard')].map(card=>{const g=f=>card.querySelector(`[data-pf="${f}"]`)?.value||'';const p={name:g('name'),version:g('version')};if(p.version==='3'){p.v3_username=g('v3_username');p.v3_auth_protocol=g('v3_auth_protocol');p.v3_auth_password=g('v3_auth_password');p.v3_priv_protocol=g('v3_priv_protocol');p.v3_priv_password=g('v3_priv_password');}else{p.community=g('community');}return p;});}
+async function saveSnmpProfiles(){fb('snmpFb','Saving…','loading');try{const r=await api('/api/snmp-profiles',{method:'POST',body:JSON.stringify({snmp_profiles:getSnmpProfiles()})});fb('snmpFb',r.ok?'SNMP profiles saved. Reload to apply.':r.error,r.ok?'ok':'err');if(r.ok){setDirty();_state.snmp_profiles=getSnmpProfiles();}}catch{fb('snmpFb','API unreachable','err');}}
+
+// Thresholds
+function ts(sid,lid,sfx){document.getElementById(lid).textContent=document.getElementById(sid).value+sfx;}
+function fillThresholds(t){const s=(id,lbl,v,sfx)=>{document.getElementById(id).value=v;document.getElementById(lbl).textContent=v+sfx;};s('cpuWarn','cpuWarnLbl',t.cpu_warn??70,'%');s('cpuCrit','cpuCritLbl',t.cpu_crit??90,'%');s('memWarn','memWarnLbl',t.mem_warn??80,'%');s('utilWarn','utilWarnLbl',t.util_warn??85,'%');s('errRate','errRateLbl',t.error_rate??5,'');s('dropRate','dropRateLbl',t.drop_rate??10,'');}
+async function saveThresholds(){const thresholds={cpu_warn:+document.getElementById('cpuWarn').value,cpu_crit:+document.getElementById('cpuCrit').value,mem_warn:+document.getElementById('memWarn').value,util_warn:+document.getElementById('utilWarn').value,error_rate:+document.getElementById('errRate').value,drop_rate:+document.getElementById('dropRate').value};fb('threshFb','Saving…','loading');try{const r=await api('/api/thresholds',{method:'POST',body:JSON.stringify({thresholds})});fb('threshFb',r.ok?'Thresholds saved. Reload to apply.':r.error,r.ok?'ok':'err');if(r.ok)setDirty();}catch{fb('threshFb','API unreachable','err');}}
+
+// Email
+function fillEmail(e){document.getElementById('smtpHost').value=e.smtp_host||'';document.getElementById('smtpPort').value=e.smtp_port||587;document.getElementById('smtpFrom').value=e.smtp_from||'';document.getElementById('smtpUser').value=e.smtp_username||'';document.getElementById('smtpPass').value=e.smtp_password||'';document.getElementById('smtpTls').checked=e.smtp_tls!==false;document.getElementById('emailWarn').value=e.default_warnings||'';document.getElementById('emailCrit').value=e.default_critical||'';}
+async function saveEmail(){const email={smtp_host:document.getElementById('smtpHost').value.trim(),smtp_port:+document.getElementById('smtpPort').value,smtp_from:document.getElementById('smtpFrom').value.trim(),smtp_username:document.getElementById('smtpUser').value.trim(),smtp_password:document.getElementById('smtpPass').value,smtp_tls:document.getElementById('smtpTls').checked,default_warnings:document.getElementById('emailWarn').value.trim(),default_critical:document.getElementById('emailCrit').value.trim()};fb('emailFb','Saving…','loading');try{const r=await api('/api/email',{method:'POST',body:JSON.stringify({email})});fb('emailFb',r.ok?'Saved. Reload to apply.':r.error,r.ok?'ok':'err');if(r.ok)setDirty();}catch{fb('emailFb','API unreachable','err');}}
+async function testEmail(){fb('emailFb','Sending…','loading');try{const r=await api('/api/test-email',{method:'POST',body:'{}'});fb('emailFb',r.ok?r.message:r.error,r.ok?'ok':'err');}catch{fb('emailFb','API unreachable','err');}}
+
+// Polling
+function fillPolling(p){document.getElementById('ifaceInterval').value=p.interfaces_interval||'60s';document.getElementById('resInterval').value=p.resources_interval||'60s';document.getElementById('tunInterval').value=p.tunnels_interval||'30s';document.getElementById('eigrpInterval').value=p.eigrp_interval||'60s';document.getElementById('routeInterval').value=p.routing_interval||'120s';document.getElementById('globalScrape').value=p.global_scrape||'60s';document.getElementById('retention').value=p.retention||'90d';}
+async function savePolling(){const polling={interfaces_interval:document.getElementById('ifaceInterval').value.trim(),resources_interval:document.getElementById('resInterval').value.trim(),tunnels_interval:document.getElementById('tunInterval').value.trim(),eigrp_interval:document.getElementById('eigrpInterval').value.trim(),routing_interval:document.getElementById('routeInterval').value.trim(),global_scrape:document.getElementById('globalScrape').value.trim(),retention:document.getElementById('retention').value.trim()};fb('pollingFb','Saving…','loading');try{const r=await api('/api/polling',{method:'POST',body:JSON.stringify({polling})});fb('pollingFb',r.ok?r.message:r.error,r.ok?'ok':'err');fb('retentionFb',r.ok?r.message:r.error,r.ok?'ok':'err');if(r.ok)setDirty();}catch{fb('pollingFb','API unreachable','err');}}
+
+// Reload
+async function doReload(){const btn=document.getElementById('reloadBtn');btn.disabled=true;fb('reloadFb','Reloading…','loading');try{const r=await api('/api/reload',{method:'POST',body:'{}'});fb('reloadFb',r.ok?'Services reloaded.':`Failed: ${r.error||(r.output||'').slice(0,100)}`,r.ok?'ok':'err');if(r.ok){_dirty=false;document.getElementById('reloadBanner').classList.remove('show');}}catch{fb('reloadFb','API unreachable — run manually: sudo bash /opt/netwatch/reload.sh','err');}btn.disabled=false;}
+
+/* ═══════════════════════════ INIT ══════════════════════════════════════════ */
+async function init() {
+  // Load config from API
   try {
-    const r = await api('/api/sites',{method:'POST',body:JSON.stringify({sites:getSites()})});
-    fb('siteFb', r.ok ? `Saved ${r.count} site(s). Reload to apply.` : r.error, r.ok?'ok':'err');
-    if (r.ok) { setDirty(); loadConfig(); }
-  } catch { fb('siteFb','API unreachable','err'); }
-}
-
-/* ═══════════════════════════════ DEVICES ═══════════════════════════════════ */
-function profileOptions(selectedName, allowNone=false) {
-  const profiles = _state.snmp_profiles || [];
-  let opts = allowNone ? '<option value="">— none —</option>' : '';
-  profiles.forEach(p => {
-    const sel = p.name === selectedName ? 'selected' : '';
-    opts += `<option value="${p.name}" ${sel}>${p.name} (v${p.version})</option>`;
-  });
-  return opts;
-}
-
-function siteOptions(selectedSite) {
-  const sites = _state.sites || [];
-  let opts = '<option value="">— unassigned —</option>';
-  sites.forEach(s => {
-    opts += `<option value="${s.name}" ${s.name===selectedSite?'selected':''}>${s.name}</option>`;
-  });
-  return opts;
-}
-
-function fillDeviceTable(devices, profiles, sites) {
-  document.getElementById('deviceRows').innerHTML = '';
-  devices.forEach(d => addDeviceRow(d));
-  if (!devices.length) addDeviceRow();
-}
-
-function addDeviceRow(d = {}) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input class="tdi mono" data-f="ip"       value="${d.ip||''}"       placeholder="10.0.0.1"></td>
-    <td><select class="tdi" data-f="site">${siteOptions(d.site||'')}</select></td>
-    <td><input class="tdi mono" data-f="hostname"  value="${d.hostname||''}" placeholder="NYC-RTR-01"></td>
-    <td><select class="tdi" data-f="snmp_profile">${profileOptions(d.snmp_profile||'')}</select></td>
-    <td><select class="tdi" data-f="snmp_fallback_profile">${profileOptions(d.snmp_fallback_profile||'',true)}</select></td>
-    <td><button class="btn btn-secondary btn-sm" onclick="testSnmpRow(this)">Test</button></td>
-    <td><button class="btn-icon" onclick="this.closest('tr').remove()" title="Remove">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-    </button></td>`;
-  document.getElementById('deviceRows').appendChild(tr);
-}
-
-function getDevices() {
-  return [...document.querySelectorAll('#deviceRows tr')].map(tr => ({
-    ip:                    tr.querySelector('[data-f="ip"]')?.value.trim()||'',
-    site:                  tr.querySelector('[data-f="site"]')?.value||'',
-    hostname:              tr.querySelector('[data-f="hostname"]')?.value.trim()||'',
-    snmp_profile:          tr.querySelector('[data-f="snmp_profile"]')?.value||'',
-    snmp_fallback_profile: tr.querySelector('[data-f="snmp_fallback_profile"]')?.value||'',
-  })).filter(d => d.ip);
-}
-
-async function saveDevices() {
-  fb('deviceFb','Saving…','loading');
-  try {
-    const r = await api('/api/devices',{method:'POST',body:JSON.stringify({devices:getDevices()})});
-    fb('deviceFb', r.ok ? `Saved ${r.count} device(s). Reload to apply.` : r.error, r.ok?'ok':'err');
-    if (r.ok) setDirty();
-  } catch { fb('deviceFb','API unreachable','err'); }
-}
-
-async function testSnmpRow(btn) {
-  const tr      = btn.closest('tr');
-  const ip      = tr.querySelector('[data-f="ip"]')?.value.trim();
-  const profile = tr.querySelector('[data-f="snmp_profile"]')?.value||'';
-  if (!ip) { alert('Enter an IP first.'); return; }
-  btn.disabled = true; btn.textContent = '…';
-  try {
-    const r = await api('/api/test-snmp',{method:'POST',body:JSON.stringify({ip,profile})});
-    btn.textContent = r.ok ? '✓ OK' : '✗ Fail';
-    btn.style.color = r.ok ? 'var(--ok)' : 'var(--danger)';
-    btn.title = r.ok ? `${r.message}${r.profile_used?' ('+r.profile_used+')':''}` : r.error;
-    setTimeout(() => { btn.textContent='Test'; btn.style.color=''; btn.disabled=false; }, 5000);
-  } catch {
-    btn.textContent='✗'; setTimeout(()=>{ btn.textContent='Test'; btn.disabled=false; }, 3000);
+    const c = await api('/api/config');
+    _state  = c;
+    buildDynamicPages(c.sites||[], c.devices||[]);
+  } catch(e) {
+    console.warn('Could not load config from API:', e);
   }
+  // Initial data load
+  await refreshOverview();
 }
 
-/* ═══════════════════════════════ SNMP PROFILES ════════════════════════════ */
-function fillSnmpProfiles(profiles) {
-  const container = document.getElementById('snmpProfileList');
-  container.innerHTML = '';
-  profiles.forEach((p,i) => renderProfileCard(p, i));
-  if (!profiles.length) { addSnmpProfile('2'); addSnmpProfile('3'); }
-}
-
-function renderProfileCard(p, idx) {
-  const container = document.getElementById('snmpProfileList');
-  const card = document.createElement('div');
-  card.className = 'acard';
-  card.dataset.profileIdx = idx;
-  const isV3 = p.version === '3';
-  card.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="badge" style="background:${isV3?'var(--blue-bg)':'var(--bg2)'};color:${isV3?'var(--blue)':'var(--text2)'}">v${p.version}</span>
-        <input class="fi mono" style="width:220px" data-pf="name" value="${p.name}" placeholder="Profile name">
-      </div>
-      <button class="btn-icon" onclick="this.closest('.acard').remove()" title="Remove profile">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-      </button>
-    </div>
-    <input type="hidden" data-pf="version" value="${p.version}">
-    ${isV3 ? `
-    <div class="fr">
-      <div class="ff"><label class="fl">Username <span class="req">*</span></label><input class="fi mono" data-pf="v3_username" value="${p.v3_username||''}" placeholder="netwatch"></div>
-      <div></div>
-    </div>
-    <div class="fr thirds">
-      <div class="ff"><label class="fl">Auth protocol</label><select class="fs" data-pf="v3_auth_protocol">
-        <option ${(p.v3_auth_protocol||'SHA')==='SHA'?'selected':''}>SHA</option>
-        <option ${p.v3_auth_protocol==='SHA256'?'selected':''}>SHA256</option>
-        <option ${p.v3_auth_protocol==='MD5'?'selected':''}>MD5</option>
-      </select></div>
-      <div class="ff" style="grid-column:span 2"><label class="fl">Auth password <span class="req">*</span></label><input class="fi mono" type="password" data-pf="v3_auth_password" value="${p.v3_auth_password||''}" placeholder="••••••••"></div>
-    </div>
-    <div class="fr thirds">
-      <div class="ff"><label class="fl">Priv protocol</label><select class="fs" data-pf="v3_priv_protocol">
-        <option ${(p.v3_priv_protocol||'AES')==='AES'?'selected':''}>AES</option>
-        <option ${p.v3_priv_protocol==='AES256'?'selected':''}>AES256</option>
-        <option ${p.v3_priv_protocol==='DES'?'selected':''}>DES</option>
-      </select></div>
-      <div class="ff" style="grid-column:span 2"><label class="fl">Priv password <span class="req">*</span></label><input class="fi mono" type="password" data-pf="v3_priv_password" value="${p.v3_priv_password||''}" placeholder="••••••••"></div>
-    </div>` : `
-    <div class="fr single">
-      <div class="ff"><label class="fl">Community string <span class="req">*</span></label>
-        <input class="fi mono" data-pf="community" value="${p.community||''}" placeholder="public">
-        <span class="fh">Set on Cisco: <code style="font-family:var(--mono)">snmp-server community &lt;string&gt; ro ACL_SNMP_NETWATCH</code></span>
-      </div>
-    </div>`}`;
-  container.appendChild(card);
-}
-
-function addSnmpProfile(version) {
-  const idx = document.querySelectorAll('#snmpProfileList .acard').length;
-  renderProfileCard({
-    name: version==='3' ? 'default-v3' : 'default-v2c',
-    version,
-    community:'', v3_username:'', v3_auth_protocol:'SHA',
-    v3_auth_password:'', v3_priv_protocol:'AES', v3_priv_password:''
-  }, idx);
-}
-
-function getSnmpProfiles() {
-  return [...document.querySelectorAll('#snmpProfileList .acard')].map(card => {
-    const g = f => card.querySelector(`[data-pf="${f}"]`)?.value||'';
-    const p = { name: g('name'), version: g('version') };
-    if (p.version==='3') {
-      p.v3_username=g('v3_username'); p.v3_auth_protocol=g('v3_auth_protocol');
-      p.v3_auth_password=g('v3_auth_password'); p.v3_priv_protocol=g('v3_priv_protocol');
-      p.v3_priv_password=g('v3_priv_password');
-    } else {
-      p.community=g('community');
-    }
-    return p;
-  });
-}
-
-async function saveSnmpProfiles() {
-  fb('snmpFb','Saving…','loading');
-  try {
-    const r = await api('/api/snmp-profiles',{method:'POST',body:JSON.stringify({snmp_profiles:getSnmpProfiles()})});
-    fb('snmpFb', r.ok ? 'SNMP profiles saved. Reload to apply.' : r.error, r.ok?'ok':'err');
-    if (r.ok) { setDirty(); _state.snmp_profiles = getSnmpProfiles(); }
-  } catch { fb('snmpFb','API unreachable','err'); }
-}
-
-/* ═══════════════════════════════ THRESHOLDS ════════════════════════════════ */
-function ts(sid, lid, sfx) {
-  document.getElementById(lid).textContent = document.getElementById(sid).value + sfx;
-}
-function fillThresholds(t) {
-  const s=(id,lbl,v,sfx)=>{document.getElementById(id).value=v;document.getElementById(lbl).textContent=v+sfx;};
-  s('cpuWarn','cpuWarnLbl',t.cpu_warn??70,'%'); s('cpuCrit','cpuCritLbl',t.cpu_crit??90,'%');
-  s('memWarn','memWarnLbl',t.mem_warn??80,'%'); s('utilWarn','utilWarnLbl',t.util_warn??85,'%');
-  s('errRate','errRateLbl',t.error_rate??5,'');  s('dropRate','dropRateLbl',t.drop_rate??10,'');
-}
-async function saveThresholds() {
-  const thresholds={cpu_warn:+document.getElementById('cpuWarn').value,cpu_crit:+document.getElementById('cpuCrit').value,mem_warn:+document.getElementById('memWarn').value,util_warn:+document.getElementById('utilWarn').value,error_rate:+document.getElementById('errRate').value,drop_rate:+document.getElementById('dropRate').value};
-  fb('threshFb','Saving…','loading');
-  try {
-    const r=await api('/api/thresholds',{method:'POST',body:JSON.stringify({thresholds})});
-    fb('threshFb',r.ok?'Thresholds saved. Reload to apply.':r.error,r.ok?'ok':'err');
-    if(r.ok)setDirty();
-  } catch{fb('threshFb','API unreachable','err');}
-}
-
-/* ═══════════════════════════════ EMAIL ═════════════════════════════════════ */
-function fillEmail(e) {
-  document.getElementById('smtpHost').value  = e.smtp_host||'';
-  document.getElementById('smtpPort').value  = e.smtp_port||587;
-  document.getElementById('smtpFrom').value  = e.smtp_from||'';
-  document.getElementById('smtpUser').value  = e.smtp_username||'';
-  document.getElementById('smtpPass').value  = e.smtp_password||'';
-  document.getElementById('smtpTls').checked = e.smtp_tls!==false;
-  document.getElementById('emailWarn').value = e.default_warnings||'';
-  document.getElementById('emailCrit').value = e.default_critical||'';
-  document.getElementById('grafanaUrl').value= e.grafana_url||'';
-}
-async function saveEmail() {
-  const email={smtp_host:document.getElementById('smtpHost').value.trim(),smtp_port:+document.getElementById('smtpPort').value,smtp_from:document.getElementById('smtpFrom').value.trim(),smtp_username:document.getElementById('smtpUser').value.trim(),smtp_password:document.getElementById('smtpPass').value,smtp_tls:document.getElementById('smtpTls').checked,default_warnings:document.getElementById('emailWarn').value.trim(),default_critical:document.getElementById('emailCrit').value.trim(),grafana_url:document.getElementById('grafanaUrl').value.trim()};
-  fb('emailFb','Saving…','loading');
-  try {
-    const r=await api('/api/email',{method:'POST',body:JSON.stringify({email})});
-    fb('emailFb',r.ok?'Email settings saved. Reload to apply.':r.error,r.ok?'ok':'err');
-    if(r.ok)setDirty();
-  } catch{fb('emailFb','API unreachable','err');}
-}
-async function testEmail() {
-  fb('emailFb','Sending…','loading');
-  try {
-    const r=await api('/api/test-email',{method:'POST',body:'{}'});
-    fb('emailFb',r.ok?r.message:r.error,r.ok?'ok':'err');
-  } catch{fb('emailFb','API unreachable','err');}
-}
-
-/* ═══════════════════════════════ POLLING ═══════════════════════════════════ */
-function fillPolling(p) {
-  document.getElementById('ifaceInterval').value = p.interfaces_interval||'60s';
-  document.getElementById('resInterval').value   = p.resources_interval||'60s';
-  document.getElementById('tunInterval').value   = p.tunnels_interval||'30s';
-  document.getElementById('eigrpInterval').value = p.eigrp_interval||'60s';
-  document.getElementById('routeInterval').value = p.routing_interval||'120s';
-  document.getElementById('globalScrape').value  = p.global_scrape||'60s';
-  document.getElementById('retention').value     = p.retention||'90d';
-}
-async function savePolling() {
-  const polling={interfaces_interval:document.getElementById('ifaceInterval').value.trim(),resources_interval:document.getElementById('resInterval').value.trim(),tunnels_interval:document.getElementById('tunInterval').value.trim(),eigrp_interval:document.getElementById('eigrpInterval').value.trim(),routing_interval:document.getElementById('routeInterval').value.trim(),global_scrape:document.getElementById('globalScrape').value.trim(),retention:document.getElementById('retention').value.trim()};
-  fb('pollingFb','Saving…','loading');
-  try {
-    const r=await api('/api/polling',{method:'POST',body:JSON.stringify({polling})});
-    fb('pollingFb',r.ok?r.message:r.error,r.ok?'ok':'err');
-    fb('retentionFb',r.ok?r.message:r.error,r.ok?'ok':'err');
-    if(r.ok)setDirty();
-  } catch{fb('pollingFb','API unreachable','err');}
-}
-async function saveGrafanaDs() {
-  fb('gfDsFb','Not yet implemented — edit /etc/netwatch/grafana/provisioning/datasources/prometheus.yml manually.','err');
-}
-
-/* ═══════════════════════════════ RELOAD ════════════════════════════════════ */
-async function doReload() {
-  const btn = document.getElementById('reloadBtn');
-  btn.disabled = true;
-  fb('reloadFb','Reloading services…','loading');
-  try {
-    const r = await api('/api/reload',{method:'POST',body:'{}'});
-    fb('reloadFb', r.ok ? 'Services reloaded.' : `Failed: ${r.error||(r.output||'').slice(0,100)}`, r.ok?'ok':'err');
-    if (r.ok) { _dirty=false; document.getElementById('reloadBanner').classList.remove('show'); }
-  } catch { fb('reloadFb','API unreachable — run manually: sudo bash /opt/netwatch/reload.sh','err'); }
-  btn.disabled = false;
-}
-
-/* ═══════════════════════════════ CHARTS ════════════════════════════════════ */
-const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
-const gc   = dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
-const tc   = '#888780';
-const hrs  = Array.from({length:12},(_,i)=>{const d=new Date();d.setMinutes(d.getMinutes()-(11-i)*5);return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');});
-const rnd  = (b,v,n=12)=>Array.from({length:n},()=>Math.round(b+(Math.random()-.5)*v));
-
-(()=>{
-  const c = document.getElementById('fleetBwChart'); if(!c)return;
-  new Chart(c,{type:'line',data:{labels:hrs,datasets:[
-    {label:'In', data:rnd(1200,300),borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,.07)',fill:true,tension:.35,borderWidth:1.5,pointRadius:0},
-    {label:'Out',data:rnd(800,200), borderColor:'#639922',backgroundColor:'rgba(99,153,34,.05)', fill:true,tension:.35,borderWidth:1.5,pointRadius:0},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
-    scales:{x:{grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:6}},
-            y:{grid:{color:gc},ticks:{color:tc,font:{size:10}}}}}});
-})();
-
-/* ═══════════════════════════════ INIT ══════════════════════════════════════ */
-pingApi();
-setInterval(pingApi, 30000);
-// Load config after brief delay to let API ping complete
-setTimeout(() => { if(_online) loadConfig(); }, 600);
+init();
 </script>
 </body>
 </html>

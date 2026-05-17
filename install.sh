@@ -3,7 +3,7 @@
 # NetWatch — Cisco IOS Monitoring Stack Installer
 # Mode:     Non-interactive — installs binaries, drops placeholder configs
 # Supports: Ubuntu 22.04+, Debian 12+, RHEL 9+, Rocky Linux, AlmaLinux
-# Stack:    SNMP Exporter + Prometheus + Alertmanager + Grafana (systemd)
+# Stack:    SNMP Exporter + Prometheus + Alertmanager + NetWatch dashboard (systemd)
 #
 # Usage:
 #   sudo bash install.sh
@@ -154,8 +154,6 @@ setup_system() {
         "${CONFIG_DIR}/prometheus/rules"
         "${CONFIG_DIR}/snmp_exporter"
         "${CONFIG_DIR}/alertmanager"
-        "${CONFIG_DIR}/grafana/provisioning/datasources"
-        "${CONFIG_DIR}/grafana/provisioning/dashboards"
         "${DATA_DIR}/prometheus"
         "${DATA_DIR}/alertmanager"
     )
@@ -293,43 +291,9 @@ install_binaries() {
 }
 
 install_grafana() {
-    header "Installing Grafana"
-
-    if command -v grafana-server &>/dev/null; then
-        info "Grafana already installed — skipping"
-        return
-    fi
-
-    if [[ "$PKG_MANAGER" == "apt" ]]; then
-        step "Adding Grafana APT repository..."
-        # Official Grafana method (as of 2025): store the raw ASCII-armored key
-        # as .asc in /etc/apt/keyrings/ — APT handles the dearmor itself.
-        # This works on Ubuntu 22.04, 24.04, and 25.04.
-        mkdir -p /etc/apt/keyrings
-        # shellcheck disable=SC2086
-        curl -fsSL ${CURL_EXTRA_OPTS} https://apt.grafana.com/gpg-full.key \
-            -o /etc/apt/keyrings/grafana.asc
-        chmod 644 /etc/apt/keyrings/grafana.asc
-
-        echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main" \
-            | tee /etc/apt/sources.list.d/grafana.list > /dev/null
-        apt-get update -qq
-        apt-get install -y -qq grafana
-    else
-        step "Adding Grafana DNF repository..."
-        cat > /etc/yum.repos.d/grafana.repo << 'EOF'
-[grafana]
-name=grafana
-baseurl=https://rpm.grafana.com
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://rpm.grafana.com/gpg.key
-EOF
-        dnf install -y -q grafana
-    fi
-
-    success "Grafana installed"
+    # Grafana removed — NetWatch dashboard is the monitoring UI
+    info "Grafana not installed (replaced by NetWatch dashboard)"
+    info "Dashboard served by netwatch-api.py at http://<host>:9199/"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -344,7 +308,7 @@ write_configs() {
     write_prometheus_yml
     write_alert_rules
     write_alertmanager_yml
-    write_grafana_provisioning
+    # Grafana removed — NetWatch dashboard serves as the monitoring UI
 }
 
 write_snmp_yml() {
@@ -417,7 +381,7 @@ modules:
       - source_indexes: [ciscoMemoryPoolType]
         lookup: 1.3.6.1.4.1.9.9.48.1.1.1.2  # memory pool name label
 
-  # Tunnel interfaces (subset of ifTable, filtered in Grafana by ifDescr~Tunnel.*)
+  # Tunnel interfaces (subset of ifTable, filtered by ifDescr~Tunnel.*)
   cisco_tunnels:
     walk:
       - 1.3.6.1.2.1.2.2.1.8       # ifOperStatus
@@ -957,7 +921,7 @@ receivers:
           {{ .Annotations.description }}<br>
           <em>Since: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}</em></p>
           {{ end }}
-          <p><a href="http://CHANGEME_grafana_host:3000">Open Grafana</a></p>
+          <p><a href="http://CHANGEME_host:9199/">Open NetWatch Dashboard</a></p>
         send_resolved: true
 
 # ── Inhibition rules ───────────────────────────────────────────────────────────
@@ -975,46 +939,9 @@ EOF
     success "alertmanager.yml written → ${dest}"
 }
 
-write_grafana_provisioning() {
-    # Prometheus datasource
-    cat > "${CONFIG_DIR}/grafana/provisioning/datasources/prometheus.yml" << 'EOF'
-apiVersion: 1
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://localhost:9090
-    isDefault: true
-    editable: true
-    jsonData:
-      timeInterval: "60s"
-EOF
+# Grafana provisioning removed — not needed without Grafana
 
-    # Dashboard provider
-    cat > "${CONFIG_DIR}/grafana/provisioning/dashboards/provider.yml" << 'EOF'
-apiVersion: 1
-providers:
-  - name: netwatch
-    folder: NetWatch
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 30
-    options:
-      path: /etc/grafana/provisioning/dashboards
-EOF
 
-    # Sync into Grafana's own provisioning directory
-    local gprov="/etc/grafana/provisioning"
-    if [[ -d "$gprov" ]]; then
-        cp "${CONFIG_DIR}/grafana/provisioning/datasources/prometheus.yml" \
-           "${gprov}/datasources/netwatch-prometheus.yml"
-        cp "${CONFIG_DIR}/grafana/provisioning/dashboards/provider.yml" \
-           "${gprov}/dashboards/netwatch-provider.yml"
-        chown -R grafana:grafana "${gprov}" 2>/dev/null || true
-    fi
-
-    success "Grafana provisioning written"
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. SYSTEMD UNITS
@@ -1060,8 +987,9 @@ ExecStart=${BIN_DIR}/prometheus \\
   --config.file=${CONFIG_DIR}/prometheus/prometheus.yml \\
   --storage.tsdb.path=${DATA_DIR}/prometheus \\
   --storage.tsdb.retention.time=90d \\
-  --web.listen-address=127.0.0.1:9090 \\
+  --web.listen-address=0.0.0.0:9090 \\
   --web.enable-lifecycle \\
+  --web.cors.origin=".*" \\
   --log.level=warn
 ExecReload=/bin/kill -HUP \$MAINPID
 StandardOutput=journal
@@ -1106,7 +1034,7 @@ enable_services() {
     header "Enabling and starting services"
     systemctl daemon-reload
 
-    for svc in snmp_exporter prometheus alertmanager grafana-server; do
+    for svc in snmp_exporter prometheus alertmanager; do
         if systemctl is-enabled --quiet "$svc" 2>/dev/null; then
             info "${svc} already enabled"
         else
@@ -1127,14 +1055,22 @@ enable_services() {
 # 7. FIREWALL
 # ─────────────────────────────────────────────────────────────────────────────
 configure_firewall() {
-    # Prometheus and Alertmanager are bound to 127.0.0.1 — only Grafana needs a hole
+    # Open ports for NetWatch dashboard (9199) and Prometheus direct query (9090)
+    # SNMP Exporter (9116) and Alertmanager (9093) stay on 127.0.0.1
+    local ports=("9199/tcp:NetWatch Admin API" "9090/tcp:Prometheus")
     if command -v ufw &>/dev/null && ufw status 2>/dev/null | grep -q "^Status: active"; then
-        ufw allow 3000/tcp comment "Grafana NetWatch" >/dev/null 2>&1 || true
-        info "ufw: opened 3000/tcp for Grafana"
+        for entry in "${ports[@]}"; do
+            local port="${entry%%:*}" label="${entry##*:}"
+            ufw allow "$port" comment "$label" >/dev/null 2>&1 || true
+            info "ufw: opened $port for $label"
+        done
     elif command -v firewall-cmd &>/dev/null && firewall-cmd --state &>/dev/null; then
-        firewall-cmd --permanent --add-port=3000/tcp >/dev/null 2>&1 || true
+        for entry in "${ports[@]}"; do
+            local port="${entry%%:*}"
+            firewall-cmd --permanent --add-port="$port" >/dev/null 2>&1 || true
+        done
         firewall-cmd --reload >/dev/null 2>&1 || true
-        info "firewalld: opened 3000/tcp for Grafana"
+        info "firewalld: opened 9090/tcp and 9199/tcp"
     fi
 }
 
@@ -1259,7 +1195,7 @@ EOF
 SNMP_EXPORTER_VERSION="${SNMP_EXPORTER_VERSION}"
 PROMETHEUS_VERSION="${PROMETHEUS_VERSION}"
 ALERTMANAGER_VERSION="${ALERTMANAGER_VERSION}"
-GRAFANA_VERSION="$(grafana-server -v 2>/dev/null | awk '{print $2}' || echo 'see: grafana-server -v')"
+# Grafana removed
 EOF
 
     # If running from the repo, keep the repo copy in sync too
@@ -1308,7 +1244,7 @@ print_summary() {
     echo ""
     echo -e "${BOLD}URLs:${RESET}"
     echo -e "     Admin UI:  http://${host_ip}:9199/   (config + dashboard)"
-    echo -e "     Grafana:   http://${host_ip}:3000/   (admin / admin — change on first login)"
+    
     echo ""
     echo -e "${BOLD}Helper scripts (in ${INSTALL_DIR}/):${RESET}"
     echo -e "     reload.sh        — validate configs and hot-reload all services"
@@ -1322,7 +1258,7 @@ print_summary() {
     echo -e "     journalctl -fu prometheus"
     echo -e "     journalctl -fu snmp_exporter"
     echo -e "     journalctl -fu alertmanager"
-    echo -e "     journalctl -fu grafana-server"
+    
     echo ""
     echo -e "${YELLOW}NOTE:${RESET} Services may show warnings until CHANGEME placeholders are replaced."
     echo ""
@@ -1342,7 +1278,7 @@ main() {
     echo "  ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝"
     echo -e "${RESET}"
     echo -e "${BOLD}  Cisco IOS Monitoring Stack — Non-Interactive Installer${RESET}"
-    echo -e "  SNMP Exporter ${SNMP_EXPORTER_VERSION}  |  Prometheus ${PROMETHEUS_VERSION}  |  Alertmanager ${ALERTMANAGER_VERSION}  |  Grafana"
+    echo -e "  SNMP Exporter ${SNMP_EXPORTER_VERSION}  |  Prometheus ${PROMETHEUS_VERSION}  |  Alertmanager ${ALERTMANAGER_VERSION}"
     echo -e "  Supports: Ubuntu 22.04+ · Debian 12+ · RHEL 9+ · Rocky · AlmaLinux"
     echo ""
 

@@ -509,7 +509,7 @@ def get_config():
 @app.route("/api/status")
 def get_status():
     svcs = {}
-    for s in ("snmp_exporter","prometheus","alertmanager","grafana-server","netwatch-api"):
+    for s in ("snmp_exporter","prometheus","alertmanager","netwatch-api"):
         try:
             r = subprocess.run(["systemctl","is-active",s],
                                capture_output=True, text=True, timeout=3)
@@ -741,8 +741,62 @@ def test_email():
     except Exception as e:
         return api_err(f"Email failed: {e}")
 
-@app.route("/", methods=["GET"])
-@app.route("/dashboard", methods=["GET"])
+@app.route("/api/prometheus/query", methods=["GET","POST"])
+def prom_query():
+    """Proxy a Prometheus instant query to avoid CORS issues."""
+    import urllib.request, urllib.parse
+    params = request.args.to_dict()
+    if request.method == "POST":
+        params.update(request.get_json(force=True, silent=True) or {})
+    qs  = urllib.parse.urlencode(params)
+    url = f"http://127.0.0.1:9090/api/v1/query?{qs}"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as r:
+            return app.response_class(r.read(), status=r.status,
+                                      mimetype="application/json")
+    except Exception as e:
+        return api_err(f"Prometheus unreachable: {e}", 502)
+
+@app.route("/api/prometheus/query_range", methods=["GET","POST"])
+def prom_query_range():
+    """Proxy a Prometheus range query."""
+    import urllib.request, urllib.parse
+    params = request.args.to_dict()
+    if request.method == "POST":
+        params.update(request.get_json(force=True, silent=True) or {})
+    qs  = urllib.parse.urlencode(params)
+    url = f"http://127.0.0.1:9090/api/v1/query_range?{qs}"
+    try:
+        with urllib.request.urlopen(url, timeout=15) as r:
+            return app.response_class(r.read(), status=r.status,
+                                      mimetype="application/json")
+    except Exception as e:
+        return api_err(f"Prometheus unreachable: {e}", 502)
+
+@app.route("/api/prometheus/alerts", methods=["GET"])
+def prom_alerts():
+    """Proxy Prometheus active alerts."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:9090/api/v1/alerts", timeout=5) as r:
+            return app.response_class(r.read(), status=r.status,
+                                      mimetype="application/json")
+    except Exception as e:
+        return api_err(f"Prometheus unreachable: {e}", 502)
+
+@app.route("/api/prometheus/targets", methods=["GET"])
+def prom_targets():
+    """Proxy Prometheus scrape targets."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:9090/api/v1/targets", timeout=5) as r:
+            return app.response_class(r.read(), status=r.status,
+                                      mimetype="application/json")
+    except Exception as e:
+        return api_err(f"Prometheus unreachable: {e}", 502)
+
+
+
 def serve_dashboard():
     p = INSTALL_DIR / "netwatch-dashboard.html"
     if p.exists():
